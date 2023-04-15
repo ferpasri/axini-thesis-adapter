@@ -1,5 +1,6 @@
 import websocket
 import sys
+import ssl
 
 sys.path.insert(0, './api')
 import announcement_pb2
@@ -76,8 +77,9 @@ class BrokerConnection:
     param [String] err
     """
     def on_error(self, ws, err):
-        self.logger.error("BrokerConnection", "Got a connection error: {}".format(err))
-        self.adapter_core.send_error(err)
+        print(err)
+        self.logger.error("BrokerConnection", "Got a connection error: {}".format(str(err)))
+        self.adapter_core.send_error(str(err))
 
         self.logger.debug("BrokerConnection", "Closing the connection...")
         self.websocket.close()
@@ -170,7 +172,7 @@ class BrokerConnection:
             on_error=lambda ws,msg: self.on_error(ws, msg),
             header={"Authorization":"Bearer " + self.token})
 
-        self.websocket.run_forever()
+        self.websocket.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
 
 
     """

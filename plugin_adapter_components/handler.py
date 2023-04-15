@@ -136,7 +136,7 @@ class Handler:
 
         pb_label = label_pb2.Label(label=label_name,
                                type=label_type,
-                               channel="ble_adapter_scanner",
+                               channel="extern",
                                parameters=pb_params)
 
         pb_label.timestamp = time.time_ns()
@@ -184,7 +184,7 @@ class Handler:
 
         pb_label = label_pb2.Label(label=label_name,
                                type=label_type,
-                               channel="ble_adapter_scanner",
+                               channel="extern",
                                parameters=pb_params)
 
         pb_label.timestamp = time.time_ns()
@@ -226,79 +226,81 @@ class Handler:
 
         label_name = label.label
 
-        if label_name == "startSession":
-            self.sut.set_device_id(self.get_param_value(label, 'Device_id'))
-        elif label_name == "scan":
-            self.sut.enable_ble_scanning(
-                self.get_param_value(label, 'Event_Code'),
-                self.get_param_value(label, 'Reply_Len'),
-                self.get_param_value(label, 'Scan_Enable'),
-                self.get_param_value(label, 'Filter_Duplicates'),
-                self.get_param_value(label, 'OGF_LE_CTL'),
-                self.get_param_value(label, 'OCF_LE_Set_Scan_Enable'))
-        elif label_name == "setScanParams":
-            self.sut.set_ble_scan_parameter(
-                self.get_param_value(label, 'Event_Code'),
-                self.get_param_value(label, 'Reply_Len'),
-                self.get_param_value(label, 'LE_Scan_Type'),
-                self.get_param_value(label, 'LE_Scan_Interval'),
-                self.get_param_value(label, 'LE_Scan_Window'),
-                self.get_param_value(label, 'Own_Address_Type'),
-                self.get_param_value(label, 'Scanning_Filter_Policy'),
-                self.get_param_value(label, 'OGF_LE_CTL'),
-                self.get_param_value(label, 'OCF_LE_Set_Scan_Parameter'))
-        elif label_name == "advertise":
-            self.sut.enable_ble_advertising(
-                self.get_param_value(label, 'Event_Code'),
-                self.get_param_value(label, 'Reply_Len'),
-                self.get_param_value(label, 'Advertising_Enable'),
-                self.get_param_value(label, 'OGF_LE_CTL'),
-                self.get_param_value(label, 'OCF_LE_Set_Advertising_Enable'))
-        elif label_name == "setAdvertisingParams":
-            self.sut.set_ble_advertise_parameter(
-                self.get_param_value(label, 'Event_Code'),
-                self.get_param_value(label, 'Reply_Len'),
-                self.get_param_value(label, 'Advertising_Interval_Min'),
-                self.get_param_value(label, 'Advertising_Interval_Max'),
-                self.get_param_value(label, 'Advertising_Type'),
-                self.get_param_value(label, 'Own_Address_Type'),
-                self.get_param_value(label, 'Peer_Address_Type'),
-                self.get_param_value(label, 'Advertising_Channel_Map'),
-                self.get_param_value(label, 'Advertising_Filter_Policy'),
-                self.get_param_value(label, 'OGF_LE_CTL'),
-                self.get_param_value(label, 'OCF_LE_Set_Advertise_Parameter'))
-        elif label_name == "createConnection":
-            self.sut.create_le_connection(
-                self.get_param_value(label, 'Event_Code'),
-                self.get_param_value(label, 'Reply_Len'),
-                self.get_param_value(label, 'LE_Scan_Interval'),
-                self.get_param_value(label, 'LE_Scan_Window'),
-                self.get_param_value(label, 'Initiator_Filter_Policy'),
-                self.get_param_value(label, 'Peer_Address_Type'),
-                self.get_param_value(label, 'Own_Address_Type'),
-                self.get_param_value(label, 'Conn_Interval_Min'),
-                self.get_param_value(label, 'Conn_Interval_Max'),
-                self.get_param_value(label, 'Conn_Latency'),
-                self.get_param_value(label, 'Supervision_Timeout'),
-                self.get_param_value(label, 'Minimum_CE_Length'),
-                self.get_param_value(label, 'Maximum_CE_Length'),
-                self.get_param_value(label, 'OGF_LE_CTL'),
-                self.get_param_value(label, 'OCF_LE_Create_Connection'))
-        elif label_name == "createConnectionCancel":
-            self.sut.create_le_connection_cancel(
-                self.get_param_value(label, 'Event_Code'),
-                self.get_param_value(label, 'Reply_Len'),
-                self.get_param_value(label, 'OGF_LE_CTL'),
-                self.get_param_value(label, 'OCF_LE_Create_Connection_Cancel'))
-        elif label_name == "inquiry":
-            self.sut.inquiry(
-                self.get_param_value(label, 'Inquiry_Length'),
-                self.get_param_value(label, 'Max_Responses'),
-                self.get_param_value(label, 'OGF_LINK_CTL'),
-                self.get_param_value(label, 'OCF_INQUIRY'))
-        elif label_name == "read_remote_name":
-            self.sut.read_remote_name(
-                self.get_param_value(label, 'Address'))
+        if label_name == "landing_page_button_click":
+            self.sut.landing_page_button_click()
+        # if label_name == "startSession":
+        #     self.sut.set_device_id(self.get_param_value(label, 'Device_id'))
+        # elif label_name == "scan":
+        #     self.sut.enable_ble_scanning(
+        #         self.get_param_value(label, 'Event_Code'),
+        #         self.get_param_value(label, 'Reply_Len'),
+        #         self.get_param_value(label, 'Scan_Enable'),
+        #         self.get_param_value(label, 'Filter_Duplicates'),
+        #         self.get_param_value(label, 'OGF_LE_CTL'),
+        #         self.get_param_value(label, 'OCF_LE_Set_Scan_Enable'))
+        # elif label_name == "setScanParams":
+        #     self.sut.set_ble_scan_parameter(
+        #         self.get_param_value(label, 'Event_Code'),
+        #         self.get_param_value(label, 'Reply_Len'),
+        #         self.get_param_value(label, 'LE_Scan_Type'),
+        #         self.get_param_value(label, 'LE_Scan_Interval'),
+        #         self.get_param_value(label, 'LE_Scan_Window'),
+        #         self.get_param_value(label, 'Own_Address_Type'),
+        #         self.get_param_value(label, 'Scanning_Filter_Policy'),
+        #         self.get_param_value(label, 'OGF_LE_CTL'),
+        #         self.get_param_value(label, 'OCF_LE_Set_Scan_Parameter'))
+        # elif label_name == "advertise":
+        #     self.sut.enable_ble_advertising(
+        #         self.get_param_value(label, 'Event_Code'),
+        #         self.get_param_value(label, 'Reply_Len'),
+        #         self.get_param_value(label, 'Advertising_Enable'),
+        #         self.get_param_value(label, 'OGF_LE_CTL'),
+        #         self.get_param_value(label, 'OCF_LE_Set_Advertising_Enable'))
+        # elif label_name == "setAdvertisingParams":
+        #     self.sut.set_ble_advertise_parameter(
+        #         self.get_param_value(label, 'Event_Code'),
+        #         self.get_param_value(label, 'Reply_Len'),
+        #         self.get_param_value(label, 'Advertising_Interval_Min'),
+        #         self.get_param_value(label, 'Advertising_Interval_Max'),
+        #         self.get_param_value(label, 'Advertising_Type'),
+        #         self.get_param_value(label, 'Own_Address_Type'),
+        #         self.get_param_value(label, 'Peer_Address_Type'),
+        #         self.get_param_value(label, 'Advertising_Channel_Map'),
+        #         self.get_param_value(label, 'Advertising_Filter_Policy'),
+        #         self.get_param_value(label, 'OGF_LE_CTL'),
+        #         self.get_param_value(label, 'OCF_LE_Set_Advertise_Parameter'))
+        # elif label_name == "createConnection":
+        #     self.sut.create_le_connection(
+        #         self.get_param_value(label, 'Event_Code'),
+        #         self.get_param_value(label, 'Reply_Len'),
+        #         self.get_param_value(label, 'LE_Scan_Interval'),
+        #         self.get_param_value(label, 'LE_Scan_Window'),
+        #         self.get_param_value(label, 'Initiator_Filter_Policy'),
+        #         self.get_param_value(label, 'Peer_Address_Type'),
+        #         self.get_param_value(label, 'Own_Address_Type'),
+        #         self.get_param_value(label, 'Conn_Interval_Min'),
+        #         self.get_param_value(label, 'Conn_Interval_Max'),
+        #         self.get_param_value(label, 'Conn_Latency'),
+        #         self.get_param_value(label, 'Supervision_Timeout'),
+        #         self.get_param_value(label, 'Minimum_CE_Length'),
+        #         self.get_param_value(label, 'Maximum_CE_Length'),
+        #         self.get_param_value(label, 'OGF_LE_CTL'),
+        #         self.get_param_value(label, 'OCF_LE_Create_Connection'))
+        # elif label_name == "createConnectionCancel":
+        #     self.sut.create_le_connection_cancel(
+        #         self.get_param_value(label, 'Event_Code'),
+        #         self.get_param_value(label, 'Reply_Len'),
+        #         self.get_param_value(label, 'OGF_LE_CTL'),
+        #         self.get_param_value(label, 'OCF_LE_Create_Connection_Cancel'))
+        # elif label_name == "inquiry":
+        #     self.sut.inquiry(
+        #         self.get_param_value(label, 'Inquiry_Length'),
+        #         self.get_param_value(label, 'Max_Responses'),
+        #         self.get_param_value(label, 'OGF_LINK_CTL'),
+        #         self.get_param_value(label, 'OCF_INQUIRY'))
+        # elif label_name == "read_remote_name":
+        #     self.sut.read_remote_name(
+        #         self.get_param_value(label, 'Address'))
 
         return physical_label
 
@@ -310,93 +312,16 @@ class Handler:
     return [label_pb2.Label]
     """
     def supported_labels(self):
-        return [self.stimulus('startSession', {
-                   'Device_id': "integer"
-                 }),
-                self.stimulus('scan', {
-                    'Event_Code': "integer",
-                    'Reply_Len': "integer",
-                    'Scan_Enable': "integer",
-                    'Filter_Duplicates': "integer",
-                    'OGF_LE_CTL': "integer",
-                    'OCF_LE_Set_Scan_Enable': "integer"
-                }),
-                self.stimulus('setScanParams', {
-                    'Event_Code': "integer",
-                    'Reply_Len': "integer",
-                    'LE_Scan_Type': "integer",
-                    'LE_Scan_Interval': "integer",
-                    'LE_Scan_Window': "integer",
-                    'Own_Address_Type': "integer",
-                    'Scanning_Filter_Policy': "integer",
-                    'OGF_LE_CTL': "integer",
-                    'OCF_LE_Set_Scan_Parameter': "integer"
-                 }),
-                self.stimulus('advertise', {
-                    'Event_Code': "integer",
-                    'Reply_Len': "integer",
-                    'Advertising_Enable': "integer",
-                    'OGF_LE_CTL': "integer",
-                    'OCF_LE_Set_Advertising_Enable': "integer"
-                 }),
-                self.stimulus('setAdvertisingParams', {
-                    'Event_Code': "integer",
-                    'Reply_Len': "integer",
-                    'Advertising_Interval_Min': "integer",
-                    'Advertising_Interval_Max': "integer",
-                    'Advertising_Type': "integer",
-                    'Own_Address_Type': "integer",
-                    'Peer_Address_Type': "integer",
-                    'Advertising_Channel_Map': "integer",
-                    'Advertising_Filter_Policy': "integer",
-                    'OGF_LE_CTL': "integer",
-                    'OCF_LE_Set_Advertise_Parameter': "integer"
-                }),
-                self.stimulus('createConnection', {
-                    'Event_Code': "integer",
-                    'Reply_Len': "integer",
-                    'LE_Scan_Interval': "integer",
-                    'LE_Scan_Window': "integer",
-                    'Initiator_Filter_Policy': "integer",
-                    'Peer_Address_Type': "integer",
-                    'Own_Address_Type': "integer",
-                    'Conn_Interval_Min': "integer",
-                    'Conn_Interval_Max': "integer",
-                    'Conn_Latency': "integer",
-                    'Supervision_Timeout': "integer",
-                    'Minimum_CE_Length': "integer",
-                    'Maximum_CE_Length': "integer",
-                    'OGF_LE_CTL': "integer",
-                    'OCF_LE_Create_Connection': "integer"
-                 }),
-                self.stimulus('createConnectionCancel', {
-                    'Event_Code': "integer",
-                    'Reply_Len': "integer",
-                    'OGF_LE_CTL': "integer",
-                    'OCF_LE_Create_Connection_Cancel': "integer"
-                }),
-                self.stimulus('inquiry', {
-                    'Inquiry_Length': "integer",
-                    'Max_Responses': "integer",
-                    'OGF_LINK_CTL': "integer",
-                    'OCF_INQUIRY': "integer"
-                }),
-                self.stimulus('read_remote_name', {
-                    'Address': "string"
-                }),
-                self.response('status', {
-                    'code': "integer"
-                }),
-                self.response('inquiry_event', {
-                    'status': "integer",
-                    'event_code': "integer",
-                    'sub_event_code': "integer",
-                    'data': "string"
-                }),
-                self.response('remote_name', {
-                    'status': "integer",
-                    'data': "string"
-                })
+        return [
+                # The stimuli
+                self.stimulus('landing_page_button_click'),
+
+                # The responses
+                self.response('landing_page_button_clicked', {'data': "string"}),
+                # self.response('element_data', {
+                #     'id': "string",
+                #     'text': "string",
+                # })
               ]
 
 
