@@ -2,7 +2,8 @@ import struct
 from threading import Thread
 # from .logger import Logger
 from .tests.landing_page import LandingPage
-from unittest import main
+# from unittest import main
+import unittest
 
 class Sut:
     """
@@ -39,7 +40,10 @@ class Sut:
         self.responses.append(self.parse_status_code(response[0]))
 
     def landing_page_button_click(self):
+
+        runner = unittest.TextTestRunner()
+        result = runner.run(unittest.TestLoader().loadTestsFromTestCase(LandingPage.testButtonClick))
+        print(result)
         # print("test")
-        testArgs = {}
-        test = main(module=LandingPage.testButtonClick, argv=testArgs)
-        print(test.result.wasSuccessful())
+        # test = main(module=LandingPage.testButtonClick, argv=testArgs)
+        # print(test.result.wasSuccessful())
