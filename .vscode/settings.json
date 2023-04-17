@@ -1,0 +1,8 @@
+{
+    "search.exclude": {
+        "./venv": true
+    },
+    "terminal.integrated.env.linux": {
+        "GTK_PATH": ""
+    }
+}
