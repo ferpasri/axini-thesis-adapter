@@ -92,9 +92,11 @@ class Handler:
     """
     def reset(self):
         self.logger.info("Handler", "Resetting the sut for new test cases")
-
-        if self.sut != None:
-            return self.sut.ble_reset()
+        
+        return self.sut
+        # TODO: reset?
+        # if self.sut != None:
+            # return self.sut.ble_reset()
 
 
     """
@@ -104,7 +106,8 @@ class Handler:
     """
     def stop(self):
         self.logger.info("Handler", "Stopping the plugin adapter from plugin handler")
-        self.sut.ble_reset
+        # TODO: reset?
+        # self.sut.ble_reset
         self.sut.stop()
         self.sut = None
 

@@ -120,13 +120,16 @@ class AdapterCore():
             self.logger.debug("AdapterCore", "Reset message received")
 
             try:
-                response = self.handler.reset()
+                # TODO: possibly handle SUT if it   cant reset
+                # print(self.handler)
+                self.handler.reset()
+                # print(response)
 
-                if response[1] != '':
-                    message = "Resetting the SUT failed due to: " + response[1]
-                    self.logger.error("AdapterCore", "{}".format(message))
-                    self.send_error(message)
-                    return
+                # if response[1] != '':
+                #     message = "Resetting the SUT failed due to: " + response[1]
+                #     self.logger.error("AdapterCore", "{}".format(message))
+                #     self.send_error(message)
+                #     return
             except Exception as e:
                 message = "Error while resetting connection to the SUT: " + str(e)
                 self.logger.error("AdapterCore", "{}".format(message))

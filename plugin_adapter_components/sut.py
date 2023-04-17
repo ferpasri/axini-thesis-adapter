@@ -39,11 +39,15 @@ class Sut:
         self.logger.debug("Sut", "Add response from {}: {}".format(function_name, self.parse_status_code(response[0])))
         self.responses.append(self.parse_status_code(response[0]))
 
-    def landing_page_button_click(self):
-
+    """
+    Run a specific test case 
+    """
+    def run_test_case(self, test):
+        suite = unittest.TestSuite()
+        suite.addTest(LandingPage("testButtonClick"))
         runner = unittest.TextTestRunner()
-        result = runner.run(unittest.TestLoader().loadTestsFromTestCase(LandingPage.testButtonClick))
-        print(result)
-        # print("test")
-        # test = main(module=LandingPage.testButtonClick, argv=testArgs)
-        # print(test.result.wasSuccessful())
+        runner.run(suite)
+
+    def landing_page_button_click(self):
+        self.run_test_case(LandingPage("testButtonClick"))
+        
