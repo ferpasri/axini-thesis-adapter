@@ -64,7 +64,7 @@ class Handler:
     """
     def response_received(self, response):
         self.logger.debug("Handler", "response received: {}".format(response))
-        self.adapter_core.send_response(self.response(response[0], response[1], response[2]),
+        self.adapter_core.send_response(self.response(response),
             None, time.time_ns())
 
 

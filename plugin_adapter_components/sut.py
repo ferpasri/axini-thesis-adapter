@@ -32,12 +32,13 @@ class Sut:
     Parse the SUT's response and add it to the response stack from the
     Handler class.
     """
-    def handle_response_status(self, function_name, response):
-        if response[1] != '':
-            self.logger.error("Sut", "Error in function {} failed due to: {}".format(function_name, response[1]))
+    def handle_response(self, function_name, response):
+        print(response)
+        # if response[1] != '':
+            # self.logger.error("Sut", "Error in function {} failed due to: {}".format(function_name, response[1]))
 
-        self.logger.debug("Sut", "Add response from {}: {}".format(function_name, self.parse_status_code(response[0])))
-        self.responses.append(self.parse_status_code(response[0]))
+        self.logger.debug("Sut", "Add response from {}".format(function_name))
+        self.responses.append(response)
 
     """
     Run a specific test case 
@@ -50,4 +51,5 @@ class Sut:
 
     def landing_page_button_click(self):
         self.run_test_case(LandingPage("testButtonClick"))
+        return self.handle_response("landing_page_button_click", {"data": "test"})
         

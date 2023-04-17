@@ -1,6 +1,7 @@
 import sys
 import time
 from .state_machine import StateMachine
+import logging
 
 sys.path.insert(0, './api')
 import announcement_pb2
@@ -101,6 +102,8 @@ class AdapterCore():
                 self.logger.debug("AdapterCore", "Stimulating label: {}".format(label.label))
                 physical_label = self.handler.stimulate(label)
             except Exception as e:
+                logging.exception(e)
+                e = str(e)
                 self.logger.error("AdapterCore", "exception: {}".format(e))
                 self.send_error("error while stimulating the SUT: " + e)
 
