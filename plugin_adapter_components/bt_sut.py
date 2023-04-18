@@ -451,7 +451,6 @@ class Sut:
 
             # Initiate a infinite loop and wait for the inquiry command to complete
             while True:
-                print("test")
                 # pkt = self.hci_socket.recv(3+bt.HCI_MAX_EVENT_SIZE+1)
                 # ptype, event, plen = struct.unpack("<BBB", pkt[:3])
                 # self.logger.debug("Sut", "Received event with packet type: {} event code: {} and packet length {}".format(ptype, event, plen))

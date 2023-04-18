@@ -4,6 +4,7 @@ from threading import Thread
 from .tests.landing_page import LandingPage
 # from unittest import main
 import unittest
+import os
 
 class Sut:
     """
@@ -32,24 +33,40 @@ class Sut:
     Parse the SUT's response and add it to the response stack from the
     Handler class.
     """
-    def handle_response(self, function_name, response):
-        print(response)
+    def handle_response(self, response):
         # if response[1] != '':
-            # self.logger.error("Sut", "Error in function {} failed due to: {}".format(function_name, response[1]))
+            # self.logger.error("Sut", "Error in function {} failed due to: {}".format(response[0], response[1]))
 
-        self.logger.debug("Sut", "Add response from {}".format(function_name))
+        self.logger.debug("Sut", "Add response: {}".format(response))
         self.responses.append(response)
 
     """
     Run a specific test case 
     """
     def run_test_case(self, test):
-        suite = unittest.TestSuite()
-        suite.addTest(LandingPage("testButtonClick"))
-        runner = unittest.TextTestRunner()
-        runner.run(suite)
+        try:
+            suite = unittest.TestSuite()
+            suite.addTest(test)
+            # TODO: print to file instead as logs
+            runner = unittest.TextTestRunner(verbosity=0)
+            result = runner.run(suite)
+
+            # Only return the result if it succeeded
+            if len(result.errors) > 0:
+                for error in result.errors:
+                    # error is a tuple of testCase and str, but the str is too long
+                    self.logger.error("Sut", "Error in selenium test due to: {}".format(error[0]))
+
+                raise Exception("a selenium test failed")
+            return result
+        
+        # Catch any exceptions that occur during the selenium test
+        except Exception as e:
+            self.logger.error("Sut", "Error running selenium test: {}".format(str(e)))
 
     def landing_page_button_click(self):
-        self.run_test_case(LandingPage("testButtonClick"))
-        return self.handle_response("landing_page_button_click", {"data": "test"})
+        response = [ "landing_page_button_clicked", { "data":"string" }, {"data": "test"} ]
+
+        result = self.run_test_case(LandingPage("testButtonClick"))
+        return self.handle_response(response)
         

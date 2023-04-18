@@ -64,8 +64,12 @@ class Handler:
     """
     def response_received(self, response):
         self.logger.debug("Handler", "response received: {}".format(response))
-        self.adapter_core.send_response(self.response(response),
+        self.adapter_core.send_response(self.response(response[0], response[1], response[2]),
             None, time.time_ns())
+        
+        # self.logger.debug("Handler", "response received: {}".format(response))
+        # self.adapter_core.send_response(self.response(response[0], response[1], response[2]),
+        #     None, time.time_ns())
 
 
     """
@@ -163,6 +167,7 @@ class Handler:
         # Create all the google protobuff Label:Paramater objects
         for param_name, param_type in parameters_type.items():
             value = parameters_value.get(param_name)
+
             pb_value = label_pb2.Label.Parameter.Value()
 
             if param_type == "string":
@@ -206,14 +211,13 @@ class Handler:
     """
     Generate a protobuf Response Label.
     return [label_pb2.Label]
-    """
+    """  
     def response(self, label_name, parameters_type, parameters_value=None):
-        if parameters_value == None:
+        if parameters_value == None or parameters_value == {}:
             return self.generate_type_label(label_name, 1, parameters_type)
         else:
             return self.generate_value_label(label_name, 1, parameters_type,
                 parameters_value)
-
 
     """
     SUT SPECIFIC
@@ -231,79 +235,6 @@ class Handler:
 
         if label_name == "landing_page_button_click":
             self.sut.landing_page_button_click()
-        # if label_name == "startSession":
-        #     self.sut.set_device_id(self.get_param_value(label, 'Device_id'))
-        # elif label_name == "scan":
-        #     self.sut.enable_ble_scanning(
-        #         self.get_param_value(label, 'Event_Code'),
-        #         self.get_param_value(label, 'Reply_Len'),
-        #         self.get_param_value(label, 'Scan_Enable'),
-        #         self.get_param_value(label, 'Filter_Duplicates'),
-        #         self.get_param_value(label, 'OGF_LE_CTL'),
-        #         self.get_param_value(label, 'OCF_LE_Set_Scan_Enable'))
-        # elif label_name == "setScanParams":
-        #     self.sut.set_ble_scan_parameter(
-        #         self.get_param_value(label, 'Event_Code'),
-        #         self.get_param_value(label, 'Reply_Len'),
-        #         self.get_param_value(label, 'LE_Scan_Type'),
-        #         self.get_param_value(label, 'LE_Scan_Interval'),
-        #         self.get_param_value(label, 'LE_Scan_Window'),
-        #         self.get_param_value(label, 'Own_Address_Type'),
-        #         self.get_param_value(label, 'Scanning_Filter_Policy'),
-        #         self.get_param_value(label, 'OGF_LE_CTL'),
-        #         self.get_param_value(label, 'OCF_LE_Set_Scan_Parameter'))
-        # elif label_name == "advertise":
-        #     self.sut.enable_ble_advertising(
-        #         self.get_param_value(label, 'Event_Code'),
-        #         self.get_param_value(label, 'Reply_Len'),
-        #         self.get_param_value(label, 'Advertising_Enable'),
-        #         self.get_param_value(label, 'OGF_LE_CTL'),
-        #         self.get_param_value(label, 'OCF_LE_Set_Advertising_Enable'))
-        # elif label_name == "setAdvertisingParams":
-        #     self.sut.set_ble_advertise_parameter(
-        #         self.get_param_value(label, 'Event_Code'),
-        #         self.get_param_value(label, 'Reply_Len'),
-        #         self.get_param_value(label, 'Advertising_Interval_Min'),
-        #         self.get_param_value(label, 'Advertising_Interval_Max'),
-        #         self.get_param_value(label, 'Advertising_Type'),
-        #         self.get_param_value(label, 'Own_Address_Type'),
-        #         self.get_param_value(label, 'Peer_Address_Type'),
-        #         self.get_param_value(label, 'Advertising_Channel_Map'),
-        #         self.get_param_value(label, 'Advertising_Filter_Policy'),
-        #         self.get_param_value(label, 'OGF_LE_CTL'),
-        #         self.get_param_value(label, 'OCF_LE_Set_Advertise_Parameter'))
-        # elif label_name == "createConnection":
-        #     self.sut.create_le_connection(
-        #         self.get_param_value(label, 'Event_Code'),
-        #         self.get_param_value(label, 'Reply_Len'),
-        #         self.get_param_value(label, 'LE_Scan_Interval'),
-        #         self.get_param_value(label, 'LE_Scan_Window'),
-        #         self.get_param_value(label, 'Initiator_Filter_Policy'),
-        #         self.get_param_value(label, 'Peer_Address_Type'),
-        #         self.get_param_value(label, 'Own_Address_Type'),
-        #         self.get_param_value(label, 'Conn_Interval_Min'),
-        #         self.get_param_value(label, 'Conn_Interval_Max'),
-        #         self.get_param_value(label, 'Conn_Latency'),
-        #         self.get_param_value(label, 'Supervision_Timeout'),
-        #         self.get_param_value(label, 'Minimum_CE_Length'),
-        #         self.get_param_value(label, 'Maximum_CE_Length'),
-        #         self.get_param_value(label, 'OGF_LE_CTL'),
-        #         self.get_param_value(label, 'OCF_LE_Create_Connection'))
-        # elif label_name == "createConnectionCancel":
-        #     self.sut.create_le_connection_cancel(
-        #         self.get_param_value(label, 'Event_Code'),
-        #         self.get_param_value(label, 'Reply_Len'),
-        #         self.get_param_value(label, 'OGF_LE_CTL'),
-        #         self.get_param_value(label, 'OCF_LE_Create_Connection_Cancel'))
-        # elif label_name == "inquiry":
-        #     self.sut.inquiry(
-        #         self.get_param_value(label, 'Inquiry_Length'),
-        #         self.get_param_value(label, 'Max_Responses'),
-        #         self.get_param_value(label, 'OGF_LINK_CTL'),
-        #         self.get_param_value(label, 'OCF_INQUIRY'))
-        # elif label_name == "read_remote_name":
-        #     self.sut.read_remote_name(
-        #         self.get_param_value(label, 'Address'))
 
         return physical_label
 
@@ -321,10 +252,6 @@ class Handler:
 
                 # The responses
                 self.response('landing_page_button_clicked', {'data': "string"}),
-                # self.response('element_data', {
-                #     'id': "string",
-                #     'text': "string",
-                # })
               ]
 
 
