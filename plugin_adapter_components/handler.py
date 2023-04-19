@@ -19,7 +19,7 @@ class Handler:
     def __init__(self, logger):
         self.adapter_core = None # callback to adapter; register separately
         self.configuration = []
-        self.sut = None
+        self.client_side_sut = None
 
         # Passed by reference to the SUT
         self.responses = []
@@ -66,10 +66,6 @@ class Handler:
         self.logger.debug("Handler", "response received: {}".format(response))
         self.adapter_core.send_response(self.response(response[0], response[1], response[2]),
             None, time.time_ns())
-        
-        # self.logger.debug("Handler", "response received: {}".format(response))
-        # self.adapter_core.send_response(self.response(response[0], response[1], response[2]),
-        #     None, time.time_ns())
 
 
     """
@@ -80,7 +76,7 @@ class Handler:
     def start(self):
         self.responses = []
 
-        self.sut = Sut(self.responses, self.logger)
+        self.client_side_sut = Sut(self.responses, self.logger)
 
         self.stop_threads = False
         self.sut_thread = Thread(target=self.running_sut,
@@ -97,10 +93,7 @@ class Handler:
     def reset(self):
         self.logger.info("Handler", "Resetting the sut for new test cases")
         
-        return self.sut
-        # TODO: reset?
-        # if self.sut != None:
-            # return self.sut.ble_reset()
+        return self.client_side_sut
 
 
     """
@@ -112,8 +105,8 @@ class Handler:
         self.logger.info("Handler", "Stopping the plugin adapter from plugin handler")
         # TODO: reset?
         # self.sut.ble_reset
-        self.sut.stop()
-        self.sut = None
+        self.client_side_sut.stop()
+        self.client_side_sut = None
 
         self.stop_sut_thread = True
         self.sut_thread.join()
@@ -234,7 +227,7 @@ class Handler:
         label_name = label.label
 
         if label_name == "landing_page_button_click":
-            self.sut.landing_page_button_click()
+            self.client_side_sut.landing_page_button_click()
 
         return physical_label
 
