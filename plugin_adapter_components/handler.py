@@ -1,9 +1,10 @@
 import sys
 import time
-from threading import Thread
-from decimal import *
+# from .client_side.labels import client_response, client_stimulus
+from decimal import Decimal
 from datetime import date
-from .sut import Sut
+from .client_side.sut import SeleniumSut
+from .server_side.sut import HttpSut
 
 sys.path.insert(0, './api')
 import label_pb2
@@ -15,20 +16,19 @@ that need to be implemented for a specific SUT.
 When a response is received from the SUT, the adapter_core.send_response
 method should be called
 """
+
+
 class Handler:
     def __init__(self, logger):
-        self.adapter_core = None # callback to adapter; register separately
+        self.adapter_core = None  # callback to adapter; register separately
         self.configuration = []
-        self.client_side_sut = None
 
-        # Passed by reference to the SUT
-        self.responses = []
-        self.stop_sut_thread = False
-        self.sut_thread = None
+        # Initialize empty SUT connections
+        self.client_side_sut = None
+        self.server_side_sut = None
 
         # Initialize logger
         self.logger = logger
-
 
     """
     Set the adapter core object reference.
@@ -36,25 +36,6 @@ class Handler:
     """
     def register_adapter_core(self, adapter_core):
         self.adapter_core = adapter_core
-
-
-    """
-    Thread that manages the sut actions
-    param [lambda function] stop
-    """
-    def running_sut(self, stop):
-        while True:
-            if stop():
-                break
-
-            response = self.responses[:1]
-
-            if response != []:
-                self.responses.pop(0)
-                self.response_received(response[0])
-            else:
-                time.sleep(0.1)
-
 
     """
     SUT SPECIFIC
@@ -67,22 +48,14 @@ class Handler:
         self.adapter_core.send_response(self.response(response[0], response[1], response[2]),
             None, time.time_ns())
 
-
     """
     SUT SPECIFIC
 
     Prepare the SUT to start testing.
     """
     def start(self):
-        self.responses = []
-
-        self.client_side_sut = Sut(self.responses, self.logger)
-
-        self.stop_threads = False
-        self.sut_thread = Thread(target=self.running_sut,
-            args=(lambda : self.stop_sut_thread, ))
-        self.sut_thread.start()
-
+        self.server_side_sut = HttpSut(self.logger, self.response_received)
+        self.client_side_sut = SeleniumSut(self.logger, self.response_received)
 
     """
     SUT SPECIFIC
@@ -93,8 +66,6 @@ class Handler:
     def reset(self):
         self.logger.info("Handler", "Resetting the sut for new test cases")
         
-        return self.client_side_sut
-
 
     """
     SUT SPECIFIC
@@ -103,18 +74,76 @@ class Handler:
     """
     def stop(self):
         self.logger.info("Handler", "Stopping the plugin adapter from plugin handler")
-        # TODO: reset?
-        # self.sut.ble_reset
+
         self.client_side_sut.stop()
         self.client_side_sut = None
 
-        self.stop_sut_thread = True
-        self.sut_thread.join()
-        self.sut_thread = None
+        self.server_side_sut.stop()
+        self.server_side_sut = None
 
         self.logger.debug("Handler", "Finished stopping the plugin adapter from plugin handler")
 
+    """
+    Generate a protobuf Stimulus Label.
+    return [label_pb2.Label]
+    """
+    def stimulus(self, label_name, parameters={}):
+        return self.generate_type_label(label_name, 0, parameters)
 
+    """
+    Generate a protobuf Response Label.
+    return [label_pb2.Label]
+    """  
+    def response(self, label_name, parameters_type, parameters_value=None):
+        if parameters_value == None or parameters_value == {}:
+            return self.generate_type_label(label_name, 1, parameters_type)
+        else:
+            return self.generate_value_label(label_name, 1, parameters_type, parameters_value)
+
+    """
+    SUT SPECIFIC
+
+    The labels supported by the adapter.
+    return [label_pb2.Label]
+    """
+    def supported_labels(self):
+        return [
+                # The client side stimuli
+                self.stimulus('c_landing_page_button_click'),
+
+                # The client side responses
+                self.response('c_landing_page_button_clicked', {}),
+              ]
+
+    """
+    SUT SPECIFIC
+
+    Processes a stimulus of a given Label message. This method also sets the
+    timestamp and physical label on the Label object. The BrokerConnection
+    handles the confirmation to TestManager itself.
+    param [label_pb2.Label] label
+    return [String] The physical label.
+    """
+    def stimulate(self, label):
+        physical_label = None
+        print(label)
+
+        # Assume all labels start with either c_ or s_:
+        # c = client side
+        # s = server side
+        label_id = label.label[:2]
+        label_name = label.label[2:]
+
+        if label_id == "c_":
+            if label_name == "landing_page_button_click":
+                self.client_side_sut.landing_page_button_click()
+        if label_id == "s_":
+            if label_name == "variable_saved":
+                # self.server_side_sut.
+                print("test")
+
+        return physical_label
+    
     """
     TODO ADD ARRAY AND HASH TYPES
 
@@ -124,7 +153,7 @@ class Handler:
     param [dict] parameters
     return [label_pb2.Label]
     """
-    def generate_type_label(self, label_name, label_type, parameters = {}):
+    def generate_type_label(self, label_name, label_type, parameters={}):
         pb_params = []
 
         # Create all the google protobuff Label:Paramater objects
@@ -135,9 +164,9 @@ class Handler:
             pb_params += [param]
 
         pb_label = label_pb2.Label(label=label_name,
-                               type=label_type,
-                               channel="extern",
-                               parameters=pb_params)
+                                   type=label_type,
+                                   channel="extern",
+                                   parameters=pb_params)
 
         pb_label.timestamp = time.time_ns()
 
@@ -184,69 +213,13 @@ class Handler:
             pb_params += [param]
 
         pb_label = label_pb2.Label(label=label_name,
-                               type=label_type,
-                               channel="extern",
-                               parameters=pb_params)
+                                   type=label_type,
+                                   channel="extern",
+                                   parameters=pb_params)
 
         pb_label.timestamp = time.time_ns()
 
         return pb_label
-
-
-    """
-    Generate a protobuf Stimulus Label.
-    return [label_pb2.Label]
-    """
-    def stimulus(self, label_name, parameters={}):
-        return self.generate_type_label(label_name, 0, parameters)
-
-
-    """
-    Generate a protobuf Response Label.
-    return [label_pb2.Label]
-    """  
-    def response(self, label_name, parameters_type, parameters_value=None):
-        if parameters_value == None or parameters_value == {}:
-            return self.generate_type_label(label_name, 1, parameters_type)
-        else:
-            return self.generate_value_label(label_name, 1, parameters_type,
-                parameters_value)
-
-    """
-    SUT SPECIFIC
-
-    Processes a stimulus of a given Label message. This method also sets the
-    timestamp and physical label on the Label object. The BrokerConnection
-    handles the confirmation to TestManager itself.
-    param [label_pb2.Label] label
-    return [String] The physical label.
-    """
-    def stimulate(self, label):
-        physical_label = None
-
-        label_name = label.label
-
-        if label_name == "landing_page_button_click":
-            self.client_side_sut.landing_page_button_click()
-
-        return physical_label
-
-
-    """
-    SUT SPECIFIC
-
-    The labels supported by the adapter.
-    return [label_pb2.Label]
-    """
-    def supported_labels(self):
-        return [
-                # The stimuli
-                self.stimulus('landing_page_button_click'),
-
-                # The responses
-                self.response('landing_page_button_clicked', {'data': "string"}),
-              ]
-
 
     """
     Instantiate a label type. In case a struct is wanted, define a dictionary
@@ -286,7 +259,6 @@ class Handler:
             self.logger.warning("Handler", "UNKNOWN TYPE FOR PARAM/STIMULUS in generate type: {}".format(param_type))
 
         return pb_value, value
-
 
     """
     Obtain the value of a parameter from a label.

@@ -9,5 +9,7 @@
         "options": [
             "--proto_path=${workspaceRoot}/api",
         ]
-    }
+    },
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": false
 }
