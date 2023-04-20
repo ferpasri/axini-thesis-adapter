@@ -4,7 +4,6 @@ import time
 from decimal import Decimal
 from datetime import date
 from .client_side.sut import SeleniumSut
-from .server_side.sut import HttpSut
 
 sys.path.insert(0, './api')
 import label_pb2
@@ -25,7 +24,6 @@ class Handler:
 
         # Initialize empty SUT connections
         self.client_side_sut = None
-        self.server_side_sut = None
 
         # Initialize logger
         self.logger = logger
@@ -54,7 +52,6 @@ class Handler:
     Prepare the SUT to start testing.
     """
     def start(self):
-        self.server_side_sut = HttpSut(self.logger, self.response_received)
         self.client_side_sut = SeleniumSut(self.logger, self.response_received)
 
     """
@@ -77,9 +74,6 @@ class Handler:
 
         self.client_side_sut.stop()
         self.client_side_sut = None
-
-        self.server_side_sut.stop()
-        self.server_side_sut = None
 
         self.logger.debug("Handler", "Finished stopping the plugin adapter from plugin handler")
 
@@ -130,17 +124,12 @@ class Handler:
 
         # Assume all labels start with either c_ or s_:
         # c = client side
-        # s = server side
         label_id = label.label[:2]
         label_name = label.label[2:]
 
         if label_id == "c_":
             if label_name == "landing_page_button_click":
                 self.client_side_sut.landing_page_button_click()
-        if label_id == "s_":
-            if label_name == "variable_saved":
-                # self.server_side_sut.
-                print("test")
 
         return physical_label
     
