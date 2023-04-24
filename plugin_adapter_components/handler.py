@@ -103,10 +103,10 @@ class Handler:
     def supported_labels(self):
         return [
                 # The client side stimuli
-                self.stimulus('c_landing_page_button_click'),
+                self.stimulus('c_landing_page_button_click', {"data": "string", "another": "string"}),
 
                 # The client side responses
-                self.response('c_landing_page_button_clicked', {}),
+                self.response('c_landing_page_button_clicked', {"data": "string"}),
               ]
 
     """
