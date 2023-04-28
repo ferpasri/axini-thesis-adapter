@@ -2,6 +2,7 @@ import sys
 import time
 # from .client_side.labels import client_response, client_stimulus
 from decimal import Decimal
+from threading import Thread
 from datetime import date
 from .client_side.sut import SeleniumSut
 
@@ -23,7 +24,11 @@ class Handler:
         self.configuration = []
 
         # Initialize empty SUT connections
-        self.client_side_sut = None
+        self.sut = None
+
+        self.responses = []
+        self.sut_thread = None
+        self.stop_sut_thread = False
 
         # Initialize logger
         self.logger = logger
@@ -34,6 +39,19 @@ class Handler:
     """
     def register_adapter_core(self, adapter_core):
         self.adapter_core = adapter_core
+
+
+    def running_sut(self, stop):
+        while True:
+            if stop():
+                break
+
+            if self.responses:
+                response = self.responses[0]
+                self.responses.pop(0)
+                self.response_received(response)
+            else:
+                time.sleep(0.1)
 
     """
     SUT SPECIFIC
@@ -52,7 +70,12 @@ class Handler:
     Prepare the SUT to start testing.
     """
     def start(self):
-        self.client_side_sut = SeleniumSut(self.logger, self.response_received)
+        self.responses = []
+        self.sut = SeleniumSut(self.logger, self.responses)
+        self.sut.start()
+        self.stop_thread = False
+        self.sut_thread = Thread(target=self.running_sut, args=(lambda: self.stop_sut_thread,))
+        self.sut_thread.start()
 
     """
     SUT SPECIFIC
@@ -72,8 +95,12 @@ class Handler:
     def stop(self):
         self.logger.info("Handler", "Stopping the plugin adapter from plugin handler")
 
-        self.client_side_sut.stop()
-        self.client_side_sut = None
+        self.sut.stop()
+        self.sut = None
+
+        self.stop_sut_thread = True
+        self.sut_thread.join()
+        self.sut_thread = None
 
         self.logger.debug("Handler", "Finished stopping the plugin adapter from plugin handler")
 
@@ -131,9 +158,9 @@ class Handler:
         label_name = label.label
 
         if label_name == "c_landing_page_button_click":
-            self.client_side_sut.landing_page_button_click()
+            self.sut.landing_page_button_click()
         else:
-            self.client_side_sut.start()
+            self.sut.start()
 
         return physical_label
     

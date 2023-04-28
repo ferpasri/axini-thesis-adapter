@@ -5,9 +5,9 @@ class SeleniumSut:
     """
     Constructor
     """
-    def __init__(self, logger, response_received):
+    def __init__(self, logger, responses):
         self.logger = logger
-        self.response_received = response_received
+        self.responses = responses
         self.driver = None
 
     """
@@ -28,7 +28,8 @@ class SeleniumSut:
     """
     def handle_response(self, response):
         self.logger.debug("Sut", "Add response: {}".format(response))
-        self.response_received(response)
+        self.responses.append(response)
+
 
     """
     Run a specific test case 
@@ -47,5 +48,5 @@ class SeleniumSut:
         self.driver = webdriver.Chrome()
         # go to the page with items listing
         self.driver.get("https://academybugs.com/find-bugs/")
-        return self.handle_response(["started", {}, {}])
+        #return self.handle_response(["started", {}, {}])
         
