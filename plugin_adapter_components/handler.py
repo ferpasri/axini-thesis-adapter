@@ -103,10 +103,14 @@ class Handler:
     def supported_labels(self):
         return [
                 # The client side stimuli
-                self.stimulus('c_landing_page_button_click', {"data": "string", "another": "string"}),
-
+                self.stimulus('c_landing_page_button_click', {'data': 'string'}),
+               
                 # The client side responses
-                self.response('c_landing_page_button_clicked', {"data": "string"}),
+                self.response('c_landing_page_button_clicked', {'data': 'string'}),
+
+                self.stimulus('start', {}),
+
+                self.response('started', {})
               ]
 
     """
@@ -124,12 +128,12 @@ class Handler:
 
         # Assume all labels start with either c_ or s_:
         # c = client side
-        label_id = label.label[:2]
-        label_name = label.label[2:]
+        label_name = label.label
 
-        if label_id == "c_":
-            if label_name == "landing_page_button_click":
-                self.client_side_sut.landing_page_button_click()
+        if label_name == "c_landing_page_button_click":
+            self.client_side_sut.landing_page_button_click()
+        else:
+            self.client_side_sut.start()
 
         return physical_label
     

@@ -1,14 +1,14 @@
-from .tests.landing_page import LandingPage
-import unittest
+from selenium import webdriver
+from selenium.webdriver.common.by import By
 
 class SeleniumSut:
     """
     Constructor
     """
-    def __init__(self, logger,response_received):
+    def __init__(self, logger, response_received):
         self.logger = logger
         self.response_received = response_received
-        self.landingPage = LandingPage()
+        self.driver = None
 
     """
     Special function: class name
@@ -34,26 +34,18 @@ class SeleniumSut:
     Run a specific test case 
     param tuple[] data
     """
-    def run_test_case(self, test, data = {}):
-        print(test)
-        
-        suite = unittest.TestSuite()
-        suite.addTest(test)
-        # TODO: print to file instead as logs
-        runner = unittest.TextTestRunner(verbosity=0)
-        result = runner.run(suite)
 
-        # Only return the result if it succeeded
-        if len(result.errors) > 0:
-            for error in result.errors:
-                # error is a tuple of testCase and str, but the str is too long
-                self.logger.error("Sut", "Error in selenium test due to: {}".format(error[0]))
-
-            raise Exception("a selenium test failed")
-        return result
 
     def landing_page_button_click(self):
-        response = [ "c_landing_page_button_clicked", { "data":"string" }, {"data": "test"} ]
-        result = self.run_test_case(LandingPage("testButtonClick"))
+        response = ["c_landing_page_button_clicked", { "data": "string" }, {"data": "test"} ]
+        add_to_cart_button = self.driver.find_element(By.CSS_SELECTOR,"#ec_add_to_cart_1")
+        add_to_cart_button.click()
         return self.handle_response(response)
+    
+
+    def start(self):
+        self.driver = webdriver.Chrome()
+        # go to the page with items listing
+        self.driver.get("https://academybugs.com/find-bugs/")
+        return self.handle_response(["started", {}, {}])
         

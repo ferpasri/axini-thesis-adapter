@@ -172,6 +172,7 @@ class BrokerConnection:
             on_error=lambda ws,msg: self.on_error(ws, msg),
             header={"Authorization":"Bearer " + self.token})
 
+        #self.websocket.run_forever(ping_timeout=120, sslopt={"cert_reqs": ssl.CERT_NONE})
         self.websocket.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
 
 
