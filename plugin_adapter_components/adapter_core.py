@@ -96,6 +96,10 @@ class AdapterCore():
                 self.logger.error("AdapterCore", "{}".format(message))
                 self.send_error(message)
 
+             # Confirm the label
+            self.logger.debug("AdapterCore", "Confirming stimulus label: {}".format(label.label))
+            self.broker_connection.send_stimulus(label, '', time.time_ns(), correlation_id)
+
             try:
                 # Perform the stimulus action which could trigger a
                 # response.
@@ -106,10 +110,6 @@ class AdapterCore():
                 self.logger.error("AdapterCore", "exception: {}".format(e))
                 self.send_error("error while stimulating the SUT: " + e)
 
-            # Confirm the label
-            self.logger.debug("AdapterCore", "Confirming stimulus label: {}".format(label.label))
-            self.broker_connection.send_stimulus(label, physical_label,
-                time.time_ns(), correlation_id)
         else:
             message = "Label received while not ready"
             self.logger.error("AdapterCore", "{}".format(message))

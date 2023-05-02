@@ -1,6 +1,6 @@
 import sys
 import time
-# from .client_side.labels import client_response, client_stimulus
+from .client_side.element import Element
 from decimal import Decimal
 from threading import Thread
 from datetime import date
@@ -129,15 +129,14 @@ class Handler:
     """
     def supported_labels(self):
         return [
-                # The client side stimuli
-                self.stimulus('c_landing_page_button_click', {'data': 'string'}),
-               
-                # The client side responses
-                self.response('c_landing_page_button_clicked', {'data': 'string'}),
+                self.stimulus('click_on', {'css_selector': 'string', 'expect_element': 'string'}),
+                self.stimulus('navigate', {'_url': 'string'}),
+                self.stimulus('fill_in', {'css_selector': 'string', 'value': 'string'}),
 
-                self.stimulus('start', {}),
+                self.response('clicked_on', {'css_selector': 'string', 'title': 'string'}),
+                self.response('get_url', {'_url': 'string'}),
+                self.response('get_value', {'value': 'string'})
 
-                self.response('started', {})
               ]
 
     """
@@ -157,10 +156,40 @@ class Handler:
         # c = client side
         label_name = label.label
 
-        if label_name == "c_landing_page_button_click":
-            self.sut.landing_page_button_click()
-        else:
-            self.sut.start()
+        if label_name == 'click_on':
+
+            tmp = label.parameters[1].name.value.struct
+            _element = Element(
+                tmp.entries[0].value.string,
+                tmp.entries[1].value.string,
+                tmp.entries[2].value.string,
+                tmp.entries[3].value.string
+            )
+            self.sut.click_on(label.parameters[0].value.string)
+            
+
+            if _element.expect == 'element':
+                self.sut.expect_element(_element.css_selector)
+
+            elif  _element.expect == 'value':
+                self.sut.get_value(_element.css_selector)
+                
+
+
+        elif label_name == 'navigate':
+
+            self.sut.navigate(label.parameters[0].value.string)
+            self.sut.get_url()
+
+        elif label_name == 'fill_in':
+            self.sut.fill_in(label.parameters[0].value.string, label.parameters[1].value.string)
+            self.sut.get_value(label.parameters[0].value.string)
+
+
+
+        # if label_name == "c_landing_page_button_click":
+        #     self.sut.landing_page_button_click()
+
 
         return physical_label
     
