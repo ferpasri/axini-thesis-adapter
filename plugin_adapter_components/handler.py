@@ -129,11 +129,10 @@ class Handler:
     """
     def supported_labels(self):
         return [
-                self.stimulus('click_on', {'css_selector': 'string', 'expect_element': 'string'}),
-                self.stimulus('navigate', {'_url': 'string'}),
+                self.stimulus('click', {'css_selector': 'string'}),
+                self.stimulus('visit', {'_url': 'string'}),
                 self.stimulus('fill_in', {'css_selector': 'string', 'value': 'string'}),
 
-                self.response('clicked_on', {'css_selector': 'string', 'title': 'string'}),
                 self.response('get_url', {'_url': 'string'}),
                 self.response('get_value', {'value': 'string'})
 
@@ -152,44 +151,18 @@ class Handler:
         physical_label = None
         print(label)
 
-        # Assume all labels start with either c_ or s_:
-        # c = client side
         label_name = label.label
 
-        if label_name == 'click_on':
+        if label_name == 'click':
+            self.sut.click(label.parameters[0].value.string)
 
-            tmp = label.parameters[1].name.value.struct
-            _element = Element(
-                tmp.entries[0].value.string,
-                tmp.entries[1].value.string,
-                tmp.entries[2].value.string,
-                tmp.entries[3].value.string
-            )
-            self.sut.click_on(label.parameters[0].value.string)
-            
-
-            if _element.expect == 'element':
-                self.sut.expect_element(_element.css_selector)
-
-            elif  _element.expect == 'value':
-                self.sut.get_value(_element.css_selector)
-                
-
-
-        elif label_name == 'navigate':
-
-            self.sut.navigate(label.parameters[0].value.string)
+        elif label_name == 'visit':
+            self.sut.visit(label.parameters[0].value.string)
             self.sut.get_url()
 
         elif label_name == 'fill_in':
             self.sut.fill_in(label.parameters[0].value.string, label.parameters[1].value.string)
             self.sut.get_value(label.parameters[0].value.string)
-
-
-
-        # if label_name == "c_landing_page_button_click":
-        #     self.sut.landing_page_button_click()
-
 
         return physical_label
     
