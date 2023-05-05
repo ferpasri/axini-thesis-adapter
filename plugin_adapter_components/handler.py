@@ -1,6 +1,5 @@
 import sys
 import time
-from .client_side.element import Element
 from decimal import Decimal
 from threading import Thread
 from datetime import date
@@ -129,7 +128,7 @@ class Handler:
     """
     def supported_labels(self):
         return [
-                self.stimulus('click', {'css_selector': 'string'}),
+                self.stimulus('click', {'css_selector': 'string', 'expected_element_selector': 'string'}),
                 self.stimulus('visit', {'_url': 'string'}),
                 self.stimulus('fill_in', {'css_selector': 'string', 'value': 'string'}),
                 self.response('page_update', {'_html' : 'string', '_url' : 'string'}),
@@ -151,15 +150,13 @@ class Handler:
         label_name = label.label
 
         if label_name == 'click':
-            self.sut.click(label.parameters[0].value.string)
+            self.sut.click(label.parameters[0].value.string, label.parameters[1].value.string)
 
         elif label_name == 'visit':
             self.sut.visit(label.parameters[0].value.string)
-            self.sut.get_url()
 
         elif label_name == 'fill_in':
             self.sut.fill_in(label.parameters[0].value.string, label.parameters[1].value.string)
-            self.sut.get_value(label.parameters[0].value.string)
 
         return physical_label
     
