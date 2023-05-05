@@ -132,10 +132,7 @@ class Handler:
                 self.stimulus('click', {'css_selector': 'string'}),
                 self.stimulus('visit', {'_url': 'string'}),
                 self.stimulus('fill_in', {'css_selector': 'string', 'value': 'string'}),
-
-                self.response('get_url', {'_url': 'string'}),
-                self.response('get_value', {'value': 'string'})
-
+                self.response('page_update', {'_html' : 'string', '_url' : 'string'}),
               ]
 
     """
