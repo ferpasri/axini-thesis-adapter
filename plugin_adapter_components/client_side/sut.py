@@ -36,26 +36,23 @@ class SeleniumSut:
 
     def click(self, css_selector):
         self.browser.find_by_css(css_selector).first.click()
-        time.sleep(2)
         self.generate_page_update_response()
 
 
     def visit(self, url):
         self.browser.visit(url)
-        time.sleep(2)
         self.generate_page_update_response()
 
 
     def fill_in(self, css_selector, value):
         self.browser.find_by_css(css_selector).fill(value)
-        time.sleep(2)
         self.generate_page_update_response()
 
 
     def start(self):
         self.browser = Browser('chrome')
-        self.browser.visit("https://academybugs.com/find-bugs/")
-        WebDriverWait(self.browser.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'body.loaded')))
+        self.browser.wait_time = 5
+        #WebDriverWait(self.browser.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'body.loaded')))
 
 
     def generate_page_update_response(self):
