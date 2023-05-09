@@ -128,10 +128,12 @@ class Handler:
     """
     def supported_labels(self):
         return [
-                self.stimulus('click', {'css_selector': 'string', 'expected_element_selector': 'string'}),
+                self.stimulus('click', {'selector': 'string', 'expected_element_selector': 'string'}),
                 self.stimulus('visit', {'_url': 'string'}),
-                self.stimulus('fill_in', {'css_selector': 'string', 'value': 'string'}),
+                self.stimulus('fill_in', {'selector': 'string', 'value': 'string'}),
+                self.stimulus('click_link', {'_url': 'string'}),
                 self.response('page_update', {'_html' : 'string', '_url' : 'string'}),
+                self.response('page_title', {'_title' : 'string', '_url' : 'string'}),
               ]
 
     """

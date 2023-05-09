@@ -42,7 +42,7 @@ class SeleniumSut:
 
     def visit(self, url):
         self.browser.visit(url)
-        self.generate_page_update_response()
+        self.generate_title_update_response()
 
 
     def fill_in(self, css_selector, value):
@@ -57,15 +57,30 @@ class SeleniumSut:
 
 
     def generate_page_update_response(self, css_selector=None):
+        parsed = ''
+
+        if css_selector and self.browser.find_by_css(css_selector).is_visible(None):
+            parsed = str(self.parse_html(css_selector))
 
         response = [
             "page_update",
-            {"_html": "string", "_url": "string"}, 
-            {"_html": self.parse_html(css_selector) if css_selector else "", "_url": self.browser.url}
+            {"_html": "string", "_url": "string"},
+            {"_html": parsed, "_url": self.browser.url}
         ]
-            
+
         self.handle_response(response)
 
     def parse_html(self, expected_element_selector):
         parsed_html = BeautifulSoup(self.browser.html, 'html.parser')
         return parsed_html.select(expected_element_selector)[0]
+
+
+    def generate_title_update_response(self):
+
+        response = [
+            "page_title",
+            {"_title": "string", "_url": "string"},
+            {"_title": self.browser.title, "_url": self.browser.url}
+        ]
+
+        self.handle_response(response)
