@@ -128,7 +128,7 @@ class Handler:
     """
     def supported_labels(self):
         return [
-                self.stimulus('click', {'selector': 'string', 'expected_element_selector': 'string'}),
+                self.stimulus('click', {'selector': 'string', 'expected_element_selector': 'string', '_properties': {'style' : 'string' }}),
                 self.stimulus('visit', {'_url': 'string'}),
                 self.stimulus('fill_in', {'selector': 'string', 'value': 'string'}),
                 self.stimulus('click_link', {'_url': 'string'}),
@@ -152,7 +152,14 @@ class Handler:
         label_name = label.label
 
         if label_name == 'click':
-            self.sut.click(label.parameters[0].value.string, label.parameters[1].value.string)
+            hash_obj = label.parameters[2].value.struct
+            hash_dict = {}
+            for entry in hash_obj.entries:
+                key = entry.key.string
+                value = entry.value.string
+                hash_dict[key] = value
+
+            self.sut.click(label.parameters[0].value.string, label.parameters[1].value.string, hash_dict)
 
         elif label_name == 'visit':
             self.sut.visit(label.parameters[0].value.string)
@@ -249,11 +256,15 @@ class Handler:
         pb_value = label_pb2.Label.Parameter.Value()
         value = None
 
-        # Check for array data type
-        if isinstance(param_type, list):
-            value = self.instantiate_label_value(param_type[0])[1]
-            pb_value.array = value
-            return pb_value
+        # Check for dict data type
+        if isinstance(param_type, dict):
+            for key, val in param_type.items():
+                entry = pb_value.hash_value.entries.add()
+                entry.key.string = key
+                entry.value.string = val
+
+            value = {'style' : 'string' }
+            return pb_value, value
 
         if param_type == "string":
             pb_value.string = 'string'

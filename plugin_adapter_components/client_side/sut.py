@@ -35,9 +35,11 @@ class SeleniumSut:
         self.responses.append(response)
 
 
-    def click(self, css_selector, expected_element_selector):
+    def click(self, css_selector, expected_element_selector, properties):
         self.browser.find_by_css(css_selector).first.click()
-        self.generate_page_update_response(expected_element_selector)
+        time.sleep(3)
+        props = self.element_has_properties(expected_element_selector, properties)
+        self.generate_page_update_response(expected_element_selector,props)
 
 
     def visit(self, url):
@@ -50,22 +52,19 @@ class SeleniumSut:
         self.generate_page_update_response(css_selector)
 
 
-    def start(self):
-        self.browser = Browser('chrome')
+    # Create a new Browser instance
+    def start(self, headless=True):
+        self.browser = Browser('chrome', headless=headless)
         self.browser.wait_time = 5
         #WebDriverWait(self.browser.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'body.loaded')))
 
 
-    def generate_page_update_response(self, css_selector=None):
-        parsed = ''
-
-        if css_selector and self.browser.find_by_css(css_selector).is_visible(None):
-            parsed = str(self.parse_html(css_selector))
+    def generate_page_update_response(self, css_selector=None, properties={}):
 
         response = [
             "page_update",
-            {"_html": "string", "_url": "string"},
-            {"_html": parsed, "_url": self.browser.url}
+            {"_properties": {"style": "string"}},
+            {"_properties": {"style": properties['style']}}
         ]
 
         self.handle_response(response)
@@ -84,3 +83,19 @@ class SeleniumSut:
         ]
 
         self.handle_response(response)
+
+
+    # This method searches an element for the given properties and returns a list of all equal properties
+    # AMP can then compare expected with actual based on the missing properties (those who were not equal)
+    def element_has_properties(self, css_selector, property_values={}):
+        element = self.browser.find_by_css(css_selector)
+        actual_property_values = {}
+        for property_name, expected_value in property_values.items():
+            actual_value = element[property_name]
+
+            # If the element does not have the required properties, return an empty dict
+            if actual_value == expected_value:
+                actual_property_values[property_name] = actual_value
+
+
+        return actual_property_values
