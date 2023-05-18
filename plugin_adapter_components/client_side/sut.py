@@ -12,6 +12,7 @@ class SeleniumSut:
         self.logger = logger
         self.responses = responses
         self.browser = None
+        self.properties = {'style': '','value': '', 'disabled': False, 'checked': False,'src': '','href': '', 'textContent': ''}
 
     """
     Special function: class name
@@ -35,11 +36,11 @@ class SeleniumSut:
         self.responses.append(response)
 
 
-    def click(self, css_selector, expected_element_selector, properties):
+    def click(self, css_selector, expected_element_selector):
         self.browser.find_by_css(css_selector).first.click()
         time.sleep(3)
-        props = self.element_has_properties(expected_element_selector, properties)
-        self.generate_page_update_response(expected_element_selector,props)
+        props = self.element_has_properties(expected_element_selector)
+        self.generate_page_update_response(expected_element_selector, props)
 
 
     def visit(self, url):
@@ -63,8 +64,16 @@ class SeleniumSut:
 
         response = [
             "page_update",
-            {"_properties": {"style": "string"}},
-            {"_properties": {"style": properties['style']}}
+            {
+                'style': 'string',
+                'value': 'string', 
+                'disabled': 'boolean', 
+                'checked': 'boolean',
+                'src': 'string',
+                'href': 'string',
+                'textContent': 'string',
+            },
+            properties
         ]
 
         self.handle_response(response)
@@ -87,15 +96,11 @@ class SeleniumSut:
 
     # This method searches an element for the given properties and returns a list of all equal properties
     # AMP can then compare expected with actual based on the missing properties (those who were not equal)
-    def element_has_properties(self, css_selector, property_values={}):
+    def element_has_properties(self, css_selector):
+
         element = self.browser.find_by_css(css_selector)
-        actual_property_values = {}
-        for property_name, expected_value in property_values.items():
-            actual_value = element[property_name]
+        for key  in self.properties:
+            if element[key]:
+                self.properties[key] = element[key]
 
-            # If the element does not have the required properties, return an empty dict
-            if actual_value == expected_value:
-                actual_property_values[property_name] = actual_value
-
-
-        return actual_property_values
+        return self.properties
