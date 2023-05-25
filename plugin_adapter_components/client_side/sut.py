@@ -3,16 +3,18 @@ from splinter import Browser
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
+import difflib
 
 class SeleniumSut:
     """
     Constructor
     """
-    def __init__(self, logger, responses):
+    def __init__(self, logger, responses, event_queue):
         self.logger = logger
         self.responses = responses
+        self.event_queue = event_queue
         self.browser = None
-        self.properties = {'style': '','value': '', 'disabled': False, 'checked': False,'src': '','href': '', 'textContent': ''}
+        self.page_source = ''
 
     """
     Special function: class name
@@ -36,21 +38,23 @@ class SeleniumSut:
         self.responses.append(response)
 
 
-    def click(self, css_selector, expected_element_selector):
+    def click(self, css_selector):
+        self.page_source = self.browser.html
         self.browser.find_by_css(css_selector).first.click()
         time.sleep(3)
-        props = self.element_has_properties(expected_element_selector)
-        self.generate_page_update_response(expected_element_selector, props)
+        # properties = self.get_properties(expected_element)
+        # self.generate_response(properties=properties)
 
 
     def visit(self, url):
         self.browser.visit(url)
-        self.generate_title_update_response()
+        self.page_source = self.browser.html
+        self.generate_response(title=True)
 
 
     def fill_in(self, css_selector, value):
+        self.page_source = self.browser.html
         self.browser.find_by_css(css_selector).fill(value)
-        self.generate_page_update_response(css_selector)
 
 
     # Create a new Browser instance
@@ -60,7 +64,16 @@ class SeleniumSut:
         #WebDriverWait(self.browser.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'body.loaded')))
 
 
-    def generate_page_update_response(self, css_selector=None, properties={}):
+    def generate_response(self, title=False, properties={}):
+
+        if title:
+            response = [
+                "page_title",
+                {"_title": "string", "_url": "string"},
+                {"_title": self.browser.title, "_url": self.browser.url}
+            ]
+            self.handle_response(response)
+            return
 
         response = [
             "page_update",
@@ -83,20 +96,9 @@ class SeleniumSut:
         return parsed_html.select(expected_element_selector)[0]
 
 
-    def generate_title_update_response(self):
-
-        response = [
-            "page_title",
-            {"_title": "string", "_url": "string"},
-            {"_title": self.browser.title, "_url": self.browser.url}
-        ]
-
-        self.handle_response(response)
-
-
     # This method searches an element for the given properties and returns a list of all equal properties
     # AMP can then compare expected with actual based on the missing properties (those who were not equal)
-    def element_has_properties(self, css_selector):
+    def get_properties(self, css_selector):
 
         element = self.browser.find_by_css(css_selector)
         for key  in self.properties:
@@ -104,3 +106,31 @@ class SeleniumSut:
                 self.properties[key] = element[key]
 
         return self.properties
+
+
+    def get_updates(self):
+
+        if not self.page_source:
+            return
+        
+        current_page_source = self.browser.html
+        diff = difflib.unified_diff(self.page_source.splitlines(), current_page_source.splitlines())
+        added_lines = []
+        removed_lines = []
+
+        for line in diff:
+            if line.startswith('+'):
+                added_lines.append(line[1:].rstrip('\n\t'))
+            elif line.startswith('-'):
+                removed_lines.append(line[1:].rstrip('\n\t'))
+
+        if added_lines or removed_lines:
+            print('Added lines:')
+            print(added_lines)
+
+            print('Removed lines:')
+            print(removed_lines)
+
+            response = ["page_update", {'ok': 'string'},{'ok':'ok'}]
+            self.handle_response(response)
+        self.page_source = current_page_source

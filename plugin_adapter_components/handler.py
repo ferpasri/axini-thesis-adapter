@@ -28,6 +28,7 @@ class Handler:
         self.responses = []
         self.sut_thread = None
         self.stop_sut_thread = False
+        self.event_queue = []
 
         # Initialize logger
         self.logger = logger
@@ -70,10 +71,13 @@ class Handler:
     """
     def start(self):
         self.responses = []
-        self.sut = SeleniumSut(self.logger, self.responses)
+        self.sut = SeleniumSut(self.logger, self.responses, self.event_queue)
         self.sut.start()
         self.stop_thread = False
+        self.stop_event_thread = False
         self.sut_thread = Thread(target=self.running_sut, args=(lambda: self.stop_sut_thread,))
+        self.event_thread = Thread(target=self.running_event, args=(lambda: self.stop_event_thread,))
+        self.event_thread.start()
         self.sut_thread.start()
 
     """
@@ -132,18 +136,7 @@ class Handler:
                 self.stimulus('visit', {'_url': 'string'}),
                 self.stimulus('fill_in', {'selector': 'string', 'value': 'string'}),
                 self.stimulus('click_link', {'_url': 'string'}),
-                self.response(
-                    'page_update', 
-                    {
-                        'style': 'string',
-                        'value': 'string', 
-                        'disabled': 'boolean', 
-                        'checked': 'boolean',
-                        'src': 'string',
-                        'href': 'string',
-                        'textContent': 'string',
-                    }
-                ),
+                self.response('page_update', {'ok': 'string'}),
                 self.response('page_title', {'_title' : 'string', '_url' : 'string'}),
               ]
 
@@ -157,23 +150,9 @@ class Handler:
     return [String] The physical label.
     """
     def stimulate(self, label):
-        physical_label = None
-        print(label)
+        self.event_queue.append(label)
 
-        label_name = label.label
 
-        if label_name == 'click':
-
-            self.sut.click(label.parameters[0].value.string, label.parameters[1].value.string)
-
-        elif label_name == 'visit':
-            self.sut.visit(label.parameters[0].value.string)
-
-        elif label_name == 'fill_in':
-            self.sut.fill_in(label.parameters[0].value.string, label.parameters[1].value.string)
-
-        return physical_label
-    
     """
     TODO ADD ARRAY AND HASH TYPES
 
@@ -319,3 +298,26 @@ class Handler:
 
         message = "Could not find param " + param_name + " in label " + label
         self.broker_connection.close(reason=message)
+
+
+    def running_event(self, stop):
+        while True:
+            if stop():
+                break
+
+            if self.event_queue:
+                label = self.event_queue[0]
+                self.event_queue.pop(0)
+                match label.label:
+                    case 'click':
+                        self.sut.click(label.parameters[0].value.string, label.parameters[1].value.string)
+                    case 'visit':
+                        self.sut.visit(label.parameters[0].value.string)
+                    case 'fill_in':
+                        self.sut.fill_in(label.parameters[0].value.string, label.parameters[1].value.string, label.parameters[2].value.string)
+                    case _:
+                        self.logger.warning("Handler", f"Unknown label: {label.label}")
+            else:
+                self.sut.get_updates()
+                time.sleep(1)
+
