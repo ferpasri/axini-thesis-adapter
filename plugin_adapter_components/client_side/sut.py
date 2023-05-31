@@ -2,7 +2,6 @@ import time
 from splinter import Browser
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from bs4 import BeautifulSoup
 import difflib
 
 class SeleniumSut:
@@ -42,14 +41,17 @@ class SeleniumSut:
         self.page_source = self.browser.html
         self.browser.find_by_css(css_selector).first.click()
         time.sleep(3)
-        # properties = self.get_properties(expected_element)
-        # self.generate_response(properties=properties)
+
+
+    def click_link(self, css_selector):
+        self.browser.find_by_css(css_selector).first.click()
+        time.sleep(2)
+        self.generate_response()
 
 
     def visit(self, url):
         self.browser.visit(url)
-        self.page_source = self.browser.html
-        self.generate_response(title=True)
+        self.generate_response()
 
 
     def fill_in(self, css_selector, value):
@@ -64,48 +66,16 @@ class SeleniumSut:
         #WebDriverWait(self.browser.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'body.loaded')))
 
 
-    def generate_response(self, title=False, properties={}):
+    def generate_response(self):
 
-        if title:
-            response = [
-                "page_title",
-                {"_title": "string", "_url": "string"},
-                {"_title": self.browser.title, "_url": self.browser.url}
-            ]
-            self.handle_response(response)
-            return
-
+        self.page_source = self.browser.html
         response = [
-            "page_update",
-            {
-                'style': 'string',
-                'value': 'string', 
-                'disabled': 'boolean', 
-                'checked': 'boolean',
-                'src': 'string',
-                'href': 'string',
-                'textContent': 'string',
-            },
-            properties
+            "page_title",
+            {"_title": "string", "_url": "string"},
+            {"_title": self.browser.title, "_url": self.browser.url}
         ]
-
         self.handle_response(response)
-
-    def parse_html(self, expected_element_selector):
-        parsed_html = BeautifulSoup(self.browser.html, 'html.parser')
-        return parsed_html.select(expected_element_selector)[0]
-
-
-    # This method searches an element for the given properties and returns a list of all equal properties
-    # AMP can then compare expected with actual based on the missing properties (those who were not equal)
-    def get_properties(self, css_selector):
-
-        element = self.browser.find_by_css(css_selector)
-        for key  in self.properties:
-            if element[key]:
-                self.properties[key] = element[key]
-
-        return self.properties
+        return
 
 
     def get_updates(self):
@@ -120,9 +90,9 @@ class SeleniumSut:
 
         for line in diff:
             if line.startswith('+'):
-                added_lines.append(line[1:].rstrip('\n\t'))
+                added_lines.append(line[1:].replace('\t','').replace('\n',''))
             elif line.startswith('-'):
-                removed_lines.append(line[1:].rstrip('\n\t'))
+                removed_lines.append(line[1:].replace('\t','').replace('\n',''))
 
         if added_lines or removed_lines:
             print('Added lines:')
@@ -131,6 +101,6 @@ class SeleniumSut:
             print('Removed lines:')
             print(removed_lines)
 
-            response = ["page_update", {'ok': 'string'},{'ok':'ok'}]
+            response = ["page_update", {'added_lines': 'array', 'removed_lines':'array' },{'added_lines': added_lines[1:],'removed_lines':removed_lines[1:]}]
             self.handle_response(response)
         self.page_source = current_page_source

@@ -6,8 +6,7 @@ from datetime import date
 from .client_side.sut import SeleniumSut
 
 sys.path.insert(0, './api')
-import label_pb2
-
+from api.label_pb2 import Label
 """
 Domain specific adapter component. These are all the specific adapter methods
 that need to be implemented for a specific SUT.
@@ -15,6 +14,13 @@ that need to be implemented for a specific SUT.
 When a response is received from the SUT, the adapter_core.send_response
 method should be called
 """
+
+# ALIASES
+Parameter = Label.Parameter
+Value = Parameter.Value
+Array = Value.Array
+Hash = Value.Hash
+Entry = Hash.Entry
 
 
 class Handler:
@@ -132,11 +138,12 @@ class Handler:
     """
     def supported_labels(self):
         return [
-                self.stimulus('click', {'selector': 'string', 'expected_element_selector': 'string' }),
+                self.stimulus('click', {'selector': 'string'}),
+                self.stimulus('click_link', {'selector': 'string'}),
                 self.stimulus('visit', {'_url': 'string'}),
                 self.stimulus('fill_in', {'selector': 'string', 'value': 'string'}),
-                self.stimulus('click_link', {'_url': 'string'}),
-                self.response('page_update', {'ok': 'string'}),
+
+                self.response('page_update', {'added_lines': 'array', 'removed_lines': 'array'}),
                 self.response('page_title', {'_title' : 'string', '_url' : 'string'}),
               ]
 
@@ -169,10 +176,10 @@ class Handler:
         for param_name, param_type in parameters.items():
             pb_value = self.instantiate_label_value(param_type)[0]
 
-            param = label_pb2.Label.Parameter(name=param_name, value=pb_value)
+            param = Parameter(name=param_name, value=pb_value)
             pb_params += [param]
 
-        pb_label = label_pb2.Label(label=label_name,
+        pb_label = Label(label=label_name,
                                    type=label_type,
                                    channel="extern",
                                    parameters=pb_params)
@@ -199,7 +206,7 @@ class Handler:
         for param_name, param_type in parameters_type.items():
             value = parameters_value.get(param_name)
 
-            pb_value = label_pb2.Label.Parameter.Value()
+            pb_value = Value()
 
             if param_type == "string":
                 pb_value.string = value
@@ -214,14 +221,16 @@ class Handler:
             elif param_type == "time":
                 pb_value.time = value
             elif param_type == "array":
-                pb_value.array = value
+                pb_value.array.CopyFrom(self.encodeList(value))
+            elif param_type == "struct":
+                pb_value.struct.CopyFrom(self.encodeDict(value))
             else:
                 self.logger.warning("Handler", "UNKNOWN TYPE FOR PARAM/STIMULUS in generate value: {}".format(param_type))
 
-            param = label_pb2.Label.Parameter(name=param_name, value=pb_value)
+            param = Parameter(name=param_name, value=pb_value)
             pb_params += [param]
 
-        pb_label = label_pb2.Label(label=label_name,
+        pb_label = Label(label=label_name,
                                    type=label_type,
                                    channel="extern",
                                    parameters=pb_params)
@@ -237,7 +246,7 @@ class Handler:
     return [label_pb2.Label.Parameter.Value]
     """
     def instantiate_label_value(self, param_type):
-        pb_value = label_pb2.Label.Parameter.Value()
+        pb_value = Value()
         value = None
 
 
@@ -259,6 +268,10 @@ class Handler:
         elif param_type == "time":
             pb_value.time = time.time_ns()
             value = time.time_ns()
+        elif param_type == "array":
+            value = []
+        elif param_type == "struct":
+            value = {}
         else:
             self.logger.warning("Handler", "UNKNOWN TYPE FOR PARAM/STIMULUS in generate type: {}".format(param_type))
 
@@ -310,14 +323,59 @@ class Handler:
                 self.event_queue.pop(0)
                 match label.label:
                     case 'click':
-                        self.sut.click(label.parameters[0].value.string, label.parameters[1].value.string)
+                        self.sut.click(label.parameters[0].value.string)
                     case 'visit':
                         self.sut.visit(label.parameters[0].value.string)
                     case 'fill_in':
-                        self.sut.fill_in(label.parameters[0].value.string, label.parameters[1].value.string, label.parameters[2].value.string)
+                        self.sut.fill_in(label.parameters[0].value.string, label.parameters[1].value.string)
+                    case 'click_link':
+                        self.sut.click_link(label.parameters[0].value.string)
                     case _:
                         self.logger.warning("Handler", f"Unknown label: {label.label}")
             else:
                 self.sut.get_updates()
                 time.sleep(1)
 
+
+    def encodeList(self, source: list) -> Array:
+        values = [self.encodeToValue(value) for value in source]
+        pb_array = Array()
+        pb_array.values.extend(values)
+        return pb_array
+    
+
+    def encodeDictItem(self, key : str, value : any) -> Entry:
+        pb_entry = Entry()
+        pb_entry.key.string = key
+        pb_entry.value.CopyFrom(self.encodeToValue(value))
+        return pb_entry
+
+
+
+    def encodeDict(self, source: dict) -> Hash:
+        entries = [self.encodeDictItem(key, value) for key, value in source.items()]
+        pb_hash = Hash()
+        pb_hash.entries.extend(entries)
+        return pb_hash
+
+
+    def encodeToValue(self, var : any) -> Value:
+        value = Value()
+        match var:
+            case str():
+                value.string = var
+            case int():
+                value.integer = var
+            case float():
+                value.decimal = var
+            case bool():
+                value.boolean = var
+            case date():
+                value.date = var
+            case time():
+                value.time = var
+            case list():
+                value.array.CopyFrom(self.encodeList(var))
+            case dict():
+                value.struct.CopyFrom(self.encodeDict(var))
+        return value
