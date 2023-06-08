@@ -143,7 +143,7 @@ class Handler:
                 self.stimulus('visit', {'_url': 'string'}),
                 self.stimulus('fill_in', {'selector': 'string', 'value': 'string'}),
 
-                self.response('page_update', {'added_lines': 'array', 'removed_lines': 'array'}),
+                self.response('page_update', {'elems': 'struct'}),
                 self.response('page_title', {'_title' : 'string', '_url' : 'string'}),
               ]
 
@@ -232,7 +232,7 @@ class Handler:
 
         pb_label = Label(label=label_name,
                                    type=label_type,
-                                   channel="extern",
+                                   channel="frontend-demo",
                                    parameters=pb_params)
 
         pb_label.timestamp = time.time_ns()
@@ -372,8 +372,8 @@ class Handler:
                 value.boolean = var
             case date():
                 value.date = var
-            case time():
-                value.time = var
+            # case time():
+            #     value.time = var
             case list():
                 value.array.CopyFrom(self.encodeList(var))
             case dict():
