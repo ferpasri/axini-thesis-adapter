@@ -2,7 +2,7 @@ from typing import Tuple
 from bs4 import Tag
 
 def __parse_style_attribute(style_attribute: str) -> dict:
-    declarations = [declaration.strip() for declaration in style_attribute.split(';')]
+    declarations = [declaration.strip() for declaration in style_attribute.split(';') if declaration]
     return {property_name : value for property_name, value in map(__split_declaration, declarations)}
 
 def __split_declaration(declaration: str) -> Tuple[str, str]:
@@ -12,4 +12,7 @@ def __split_declaration(declaration: str) -> Tuple[str, str]:
     return property_name, value
 
 def get_attributes(tag: Tag) -> dict:
-    return {**tag.attrs, 'style': __parse_style_attribute(tag.get('style'))}
+    attributes = tag.attrs
+    if 'style' in attributes:
+        attributes['style'] = __parse_style_attribute(tag.get('style'))
+    return attributes
