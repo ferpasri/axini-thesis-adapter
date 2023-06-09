@@ -232,7 +232,7 @@ class Handler:
 
         pb_label = Label(label=label_name,
                                    type=label_type,
-                                   channel="frontend-demo",
+                                   channel="extern",
                                    parameters=pb_params)
 
         pb_label.timestamp = time.time_ns()
