@@ -2,11 +2,9 @@ import time
 from splinter import Browser
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import difflib
-from bs4 import BeautifulSoup
-
-props = ['style']
-
+from xmldiff import main
+from lxml import etree
+from io import StringIO 
 
 class SeleniumSut:
     """
@@ -43,19 +41,18 @@ class SeleniumSut:
 
     def click(self, css_selector):
         self.page_source = self.browser.html
-        self.browser.find_by_css(css_selector).first.click()
-        time.sleep(3)
+        self.browser.find_by_css(css_selector).is_visible()
+        self.browser.find_by_css(css_selector).click()
 
 
     def click_link(self, css_selector):
-        self.browser.find_by_css(css_selector).first.click()
-        time.sleep(3)
+        self.browser.find_by_css(css_selector).is_visible()
+        self.browser.find_by_css(css_selector).click()
         self.generate_response()
 
 
     def visit(self, url):
         self.browser.visit(url)
-        time.sleep(3)
         self.generate_response()
 
 
@@ -88,65 +85,26 @@ class SeleniumSut:
         if not self.page_source:
             return
         
-        current_page_source = self.browser.html
-        diff = difflib.unified_diff(self.page_source.splitlines(), current_page_source.splitlines())
-        added_lines = []
-        removed_lines = []
+        before = self.page_source
+        after = self.browser.html
 
-        for line in diff:
-            if line.startswith('+'):
-                added_lines.append(line[1:].replace('\t','').replace('\n',''))
-            elif line.startswith('-'):
-                removed_lines.append(line[1:].replace('\t','').replace('\n',''))
+        parser = etree.HTMLParser()
 
-        if added_lines or removed_lines:
-            added_lines.pop(0)
-            removed_lines.pop(0)
+        before = etree.parse(StringIO(before), parser)
+        after = etree.parse(StringIO(after), parser)
 
-            tmp = {}
-            for removed_line, added_line in zip(removed_lines, added_lines):
-                vals = self.get_css_selector(removed_line, added_line)
-                if vals:
-                    tmp.update(vals)
+        results = main.diff_trees(before, after)
 
-            if tmp:
-                response = ["page_update", {'elems': 'struct'},{'elems': tmp}]
-                self.handle_response(response)
+        nodes = {}
+        for result in results:
+            attributes = {}
+            fields = result._fields
+            for field in fields:
+                attributes[field] = getattr(result, field)
+            nodes[type(result).__name__] = attributes
 
-        self.page_source = current_page_source
+        if nodes:
+            response = ["page_update", {'nodes': 'struct'},{'nodes': nodes}]
+            self.handle_response(response)
 
-
-
-
-    def get_css_selector(self, r_line, a_line):
-        # Create a BeautifulSoup object
-        removed_element = BeautifulSoup(r_line, 'html.parser').find(True)
-        added_element = BeautifulSoup(a_line, 'html.parser').find(True)
-
-        css_selector = ""
-        before = ""
-        after = ""
-        tmp = {}
-
-        if removed_element and added_element:
-                    
-            # Build the CSS selector string
-            css_selector_parts = [removed_element.name]
-
-            element_id = removed_element.get('id')
-            if element_id:
-                css_selector_parts.append("#" + element_id)
-
-            element_classes = removed_element.get('class')
-            if element_classes:
-                css_classes = ".".join(element_classes)
-                css_selector_parts.append("." + css_classes)
-
-            css_selector = "".join(css_selector_parts)
-
-            for prop in props:
-#                before = removed_element.get(prop) if removed_element.get(prop) else ''
-                after = added_element.get(prop) if added_element.get(prop) else ''
-                tmp[css_selector] = {prop : after}
-
-        return tmp
+        self.page_source = self.browser.html
