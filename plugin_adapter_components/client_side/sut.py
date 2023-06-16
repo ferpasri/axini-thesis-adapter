@@ -100,8 +100,13 @@ class SeleniumSut:
             attributes = {}
             fields = result._fields
             for field in fields:
-                attributes[field] =str(getattr(result, field))
-            nodes[type(result).__name__] = attributes
+                attributes[field] = str(getattr(result, field))
+
+            # Check if the key exists in nodes
+            if type(result).__name__ in nodes:
+                nodes[type(result).__name__].append(attributes)
+            else:
+                nodes[type(result).__name__] = [attributes]
 
         if nodes:
             response = ["page_update", {'nodes': 'struct'},{'nodes': nodes}]
