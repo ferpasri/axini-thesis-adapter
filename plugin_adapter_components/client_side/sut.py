@@ -64,7 +64,7 @@ class SeleniumSut:
     # Create a new Browser instance
     def start(self, headless=True):
         self.browser = Browser('chrome', headless=headless)
-        self.browser.wait_time = 5
+        self.browser.wait_time = 10
         #WebDriverWait(self.browser.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'body.loaded')))
 
 
@@ -100,7 +100,7 @@ class SeleniumSut:
             attributes = {}
             fields = result._fields
             for field in fields:
-                attributes[field] = getattr(result, field)
+                attributes[field] =str(getattr(result, field))
             nodes[type(result).__name__] = attributes
 
         if nodes:

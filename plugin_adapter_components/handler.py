@@ -334,7 +334,7 @@ class Handler:
                         self.logger.warning("Handler", f"Unknown label: {label.label}")
             else:
                 self.sut.get_updates()
-                time.sleep(1)
+                time.sleep(0.5)
 
 
     def encodeList(self, source: list) -> Array:
