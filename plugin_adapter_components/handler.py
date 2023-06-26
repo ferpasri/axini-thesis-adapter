@@ -113,12 +113,14 @@ class Handler:
 
         self.logger.debug("Handler", "Finished stopping the plugin adapter from plugin handler")
 
+
     """
     Generate a protobuf Stimulus Label.
     return [label_pb2.Label]
     """
     def stimulus(self, label_name, parameters={}):
         return self.generate_type_label(label_name, 0, parameters)
+
 
     """
     Generate a protobuf Response Label.
@@ -129,6 +131,7 @@ class Handler:
             return self.generate_type_label(label_name, 1, parameters_type)
         else:
             return self.generate_value_label(label_name, 1, parameters_type, parameters_value)
+
 
     """
     SUT SPECIFIC
@@ -147,6 +150,7 @@ class Handler:
                 self.response('page_title', {'_title' : 'string', '_url' : 'string'}),
               ]
 
+
     """
     SUT SPECIFIC
 
@@ -160,9 +164,8 @@ class Handler:
         self.event_queue.append(label)
 
 
-    """
-    TODO ADD ARRAY AND HASH TYPES
 
+    """
     Generate a protobuff label object with default type values.
     param [String] label_name
     param [label_pb2.Label.LabelType] label_type
@@ -189,9 +192,8 @@ class Handler:
         return pb_label
 
 
-    """
-    TODO ADD ARRAY AND HASH TYPES
 
+    """
     Generate a protobuf Label containing parameters with filled in values.
     param [String] label_name
     param [label_pb2.Label.LabelType] label_type
@@ -239,6 +241,7 @@ class Handler:
 
         return pb_label
 
+
     """
     Instantiate a label type. In case a struct is wanted, define a dictionary
     using the wanted keys with instantiated values.
@@ -248,7 +251,6 @@ class Handler:
     def instantiate_label_value(self, param_type):
         pb_value = Value()
         value = None
-
 
         if param_type == "string":
             pb_value.string = 'string'
@@ -276,6 +278,7 @@ class Handler:
             self.logger.warning("Handler", "UNKNOWN TYPE FOR PARAM/STIMULUS in generate type: {}".format(param_type))
 
         return pb_value, value
+
 
     """
     Obtain the value of a parameter from a label.
@@ -313,6 +316,10 @@ class Handler:
         self.broker_connection.close(reason=message)
 
 
+    """
+    Execute a loop until the stop condition is met, process events from the event queue.
+    param [function] stop
+    """
     def running_event(self, stop):
         while True:
             if stop():
@@ -337,6 +344,11 @@ class Handler:
                 time.sleep(0.5)
 
 
+    """
+    Encode a list of values to a google protobuff Array object.
+    param [list] source
+    return [label_pb2.Array]
+    """
     def encodeList(self, source: list) -> Array:
         values = [self.encodeToValue(value) for value in source]
         pb_array = Array()
@@ -344,6 +356,11 @@ class Handler:
         return pb_array
     
 
+    """
+    Encode a dictionary to a google protobuff Hash object.
+    param [dict] source
+    return [label_pb2.Hash]
+    """
     def encodeDictItem(self, key : str, value : any) -> Entry:
         pb_entry = Entry()
         pb_entry.key.string = key
@@ -351,7 +368,11 @@ class Handler:
         return pb_entry
 
 
-
+    """
+    Encode a dictionary to a google protobuff Hash object.
+    param [dict] source
+    return [label_pb2.Hash]
+    """
     def encodeDict(self, source: dict) -> Hash:
         entries = [self.encodeDictItem(key, value) for key, value in source.items()]
         pb_hash = Hash()
@@ -359,6 +380,11 @@ class Handler:
         return pb_hash
 
 
+    """
+    Encode a value to a google protobuff Value object.
+    param [any] var
+    return [label_pb2.Value]
+    """
     def encodeToValue(self, var : any) -> Value:
         value = Value()
         match var:
