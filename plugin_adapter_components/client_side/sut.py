@@ -29,6 +29,7 @@ class SeleniumSut:
     def stop(self):
         self.logger.info("Sut", "Selenium has stopped testing the SUT")
         self.responses = []
+        self.browser.quit()
 
 
     """
@@ -47,9 +48,12 @@ class SeleniumSut:
     param [String] css_selector
     """
     def click(self, css_selector):
-        self.page_source = self.browser.html
         self.browser.find_by_css(css_selector).is_visible()
+        self.page_source = self.browser.html
         self.browser.find_by_css(css_selector).click()
+    
+    def accept_alert(self):
+        self.browser.driver.switch_to.alert.accept()
 
 
     """
@@ -113,7 +117,7 @@ class SeleniumSut:
 
         if not self.page_source:
             return
-        
+
         before = self.page_source
         after = self.browser.html
 

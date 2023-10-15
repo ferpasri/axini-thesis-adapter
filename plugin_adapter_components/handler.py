@@ -94,6 +94,9 @@ class Handler:
     """
     def reset(self):
         self.logger.info("Handler", "Resetting the sut for new test cases")
+        self.stop()
+        self.start()
+
         
 
     """
@@ -145,6 +148,7 @@ class Handler:
                 self.stimulus('click_link', {'selector': 'string'}),
                 self.stimulus('visit', {'_url': 'string'}),
                 self.stimulus('fill_in', {'selector': 'string', 'value': 'string'}),
+                self.stimulus('accept_alert', {}),
 
                 self.response('page_update', {'nodes': 'struct'}),
                 self.response('page_title', {'_title' : 'string', '_url' : 'string'}),
