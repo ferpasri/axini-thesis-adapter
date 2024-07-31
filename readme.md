@@ -1,3 +1,7 @@
+### Master Project. 
+### Adapter that automates Model Based Web Interfaces Testing.
+
+
 ### Setup
 Create a [virtual environment](https://docs.python.org/3/library/venv.html), activate it, and then run:
 
