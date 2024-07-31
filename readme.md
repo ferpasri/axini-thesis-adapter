@@ -1,6 +1,7 @@
-### Master Project. 
 ### Adapter that automates Model Based Web Interfaces Testing.
+It was implemented as a part of the master project.
 
+Technolgies: Python 3, Selenium, Protobuf
 
 ### Setup
 Create a [virtual environment](https://docs.python.org/3/library/venv.html), activate it, and then run:
