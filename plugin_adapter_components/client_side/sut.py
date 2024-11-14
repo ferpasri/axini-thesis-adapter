@@ -62,8 +62,15 @@ class SeleniumSut:
     param [String] css_selector
     """
     def click_link(self, css_selector):
-        self.browser.find_by_css(css_selector).is_visible()
-        self.browser.find_by_css(css_selector).click()
+        # Element is not clickable at point(x,y). Other element would receive the click
+        #self.browser.find_by_css(css_selector).is_visible()
+        #self.browser.find_by_css(css_selector).click()
+
+        # Interact at JavaScript level
+        element = self.browser.find_by_css(css_selector).first
+        element.is_visible()
+        self.browser.execute_script("arguments[0].scrollIntoView();", element._element)
+        self.browser.execute_script("arguments[0].click();", element._element)
         self.generate_response()
 
 

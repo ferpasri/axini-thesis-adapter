@@ -344,7 +344,8 @@ class Handler:
                     case _:
                         self.logger.warning("Handler", f"Unknown label: {label.label}")
             else:
-                self.sut.get_updates()
+                # Temporally disabled
+                #self.sut.get_updates()
                 time.sleep(0.5)
 
 
