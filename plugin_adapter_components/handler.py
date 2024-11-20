@@ -24,7 +24,7 @@ Entry = Hash.Entry
 
 
 class Handler:
-    def __init__(self, logger):
+    def __init__(self, logger, headless):
         self.adapter_core = None  # callback to adapter; register separately
         self.configuration = []
 
@@ -35,6 +35,7 @@ class Handler:
         self.sut_thread = None
         self.stop_sut_thread = False
         self.event_queue = []
+        self.headless = headless
 
         # Initialize logger
         self.logger = logger
@@ -77,7 +78,7 @@ class Handler:
     """
     def start(self):
         self.responses = []
-        self.sut = SeleniumSut(self.logger, self.responses, self.event_queue)
+        self.sut = SeleniumSut(self.logger, self.responses, self.event_queue, self.headless)
         self.sut.start()
         self.stop_thread = False
         self.stop_event_thread = False

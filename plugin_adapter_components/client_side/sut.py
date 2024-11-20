@@ -9,10 +9,11 @@ class SeleniumSut:
     """
     Constructor
     """
-    def __init__(self, logger, responses, event_queue):
+    def __init__(self, logger, responses, event_queue, headless):
         self.logger = logger
         self.responses = responses
         self.event_queue = event_queue
+        self.headless = headless
         self.browser = None
         self.page_source = ''
 
@@ -96,10 +97,9 @@ class SeleniumSut:
 
     """
     Creates a new Selenium browser instance.
-    param [Boolean] headless
     """
-    def start(self, headless=True):
-        self.browser = Browser('chrome', headless=headless)
+    def start(self):
+        self.browser = Browser('chrome', headless=self.headless)
         self.browser.wait_time = 10
 
 

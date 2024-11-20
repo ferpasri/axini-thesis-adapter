@@ -8,14 +8,25 @@ from plugin_adapter_components.broker_connection import BrokerConnection
 from plugin_adapter_components.handler import Handler
 
 """
+Custom function to convert string to boolean
+"""
+def str2bool(value):
+    if value.lower() in ('true', 't', '1'):
+        return True
+    elif value.lower() in ('false', 'f', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError("Boolean value expected (True/False).")
+
+"""
 Start the plugin adapter to connect with AMP.
 """
-def start_plugin_adapter(name, url, token, log_level, extra_logs):
+def start_plugin_adapter(name, url, token, log_level, extra_logs, headless):
     logger = Logger()
     logger.log_level(log_level & logger.LOG_ALL)
 
     broker_connection = BrokerConnection(url, token, extra_logs, logger)
-    handler = Handler(logger)
+    handler = Handler(logger, headless)
 
     adapter_core = AdapterCore(name, broker_connection, handler, logger)
 
@@ -40,6 +51,8 @@ if __name__ == '__main__':
         help='AMP Adapter logger level: 1 = error, 2 = warning, 4 = info, 8 = debug or 15 = all', required=False)
     parser.add_argument('-el','--extra_logs',
         help='Show extra logs related to the socket: True', required=False)
+    parser.add_argument('--headless',
+        help='Run web tests in headless mode', required=False)
 
     args = parser.parse_args()
 
@@ -55,4 +68,9 @@ if __name__ == '__main__':
     if args.extra_logs == None or args.extra_logs != "True":
         extra_logs = False
 
-    start_plugin_adapter(name, args.url, args.token, log_level, extra_logs)
+    if args.headless is None:
+        headless = True
+    else:
+        headless = args.headless if isinstance(args.headless, bool) else str2bool(args.headless)
+
+    start_plugin_adapter(name, args.url, args.token, log_level, extra_logs, headless)
