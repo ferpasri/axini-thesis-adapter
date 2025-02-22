@@ -8,5 +8,8 @@ call myenv\Scripts\activate
 REM Install dependencies from requirements.txt
 pip install -r requirements.txt
 
+REM Get the token from the environment variable
+set TOKEN=%AXINI_API_KEY%
+
 REM Run the Python script with specified arguments
-python plugin_adapter.py --channel controller --name autolink --url "wss://research01.axini.com:443/adapters" --log_level 4 --headless False --token addyourtokenhere
+python plugin_adapter.py --channel controller --name autolink --url "wss://research01.axini.com:443/adapters" --log_level 4 --headless False --token %TOKEN%
