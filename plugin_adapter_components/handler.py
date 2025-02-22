@@ -108,12 +108,19 @@ class Handler:
     def stop(self):
         self.logger.info("Handler", "Stopping the plugin adapter from plugin handler")
 
-        self.sut.stop()
-        self.sut = None
+        # Stop the event thread
+        if self.event_thread:
+            self.stop_event_thread = True
+            self.event_thread.join()
+            self.event_thread = None
 
-        self.stop_sut_thread = True
-        self.sut_thread.join()
-        self.sut_thread = None
+        # Stop the SUT 
+        if self.sut:
+            self.sut.stop()
+            self.sut = None
+        else:
+            self.logger.debug("Handler", "Sut connection has not yet been initialized")
+
 
         self.logger.debug("Handler", "Finished stopping the plugin adapter from plugin handler")
 

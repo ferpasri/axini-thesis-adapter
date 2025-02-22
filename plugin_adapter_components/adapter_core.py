@@ -119,28 +119,25 @@ class AdapterCore():
     """ Broker call back when a Reset Message is received. """
     def reset_received(self):
         if self.state_machine.is_ready():
-            self.logger.debug("AdapterCore", "Reset message received")
+            self.logger.info("AdapterCore", "Reset message received")
+            self.state_machine.set_configured()
 
+            # Reset the SUT
+            self.logger.info("AdapterCore", "Reset connection to the SUT")
             try:
-                # TODO: possibly handle SUT if it   cant reset
-                # print(self.handler)
                 self.handler.reset()
-                # print(response)
-
-                # if response[1] != '':
-                #     message = "Resetting the SUT failed due to: " + response[1]
-                #     self.logger.error("AdapterCore", "{}".format(message))
-                #     self.send_error(message)
-                #     return
             except Exception as e:
-                message = "Error while resetting connection to the SUT: " + str(e)
-                self.logger.error("AdapterCore", "{}".format(message))
-                self.send_error(message)
+                self.logger.error("AdapterCore", "Error resetting the connection to the SUT: {}".format(e))
+                self.send_error(str(e))
                 return
 
             self.logger.debug("AdapterCore", "Sending ready")
             self.broker_connection.send_ready()
             self.state_machine.set_ready()
+        elif self.state_machine.is_connected():
+            message = "Reset received but there is a connecton error"
+            self.logger.error("AdapterCore", "{}".format(message))
+            self.send_error(message)
         else:
             message = 'Reset received while not ready'
             self.logger.error("AdapterCore", "{}".format(message))
