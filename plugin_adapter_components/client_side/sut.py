@@ -3,6 +3,7 @@ from xmldiff import main
 from lxml import etree
 from io import StringIO 
 import re
+import time
 
 # This class executes labels on the SUT and generates responses
 class SeleniumSut:
@@ -75,8 +76,16 @@ class SeleniumSut:
             if self.browser.is_element_present_by_css(selector, wait_time=5):
                 element = self.browser.find_by_css(selector).first
                 element.is_visible()
+                old_url = self.browser.url
                 self.browser.execute_script("arguments[0].scrollIntoView();", element._element)
                 self.browser.execute_script("arguments[0].click();", element._element)
+
+                # Wait for URL to change
+                for _ in range(5):
+                    time.sleep(1)
+                    if self.browser.url != old_url:
+                        break
+
                 self.generate_response()
                 return
 
