@@ -120,8 +120,24 @@ class SeleniumSut:
     param [String] value
     """
     def fill_in(self, css_selector, value):
-        self.page_source = self.browser.html
-        self.browser.find_by_css(css_selector).fill(value)
+        selectors = [css_selector, self.sanitize_selector(css_selector)]
+
+        # Interact at JavaScript level
+        for selector in selectors:
+            print(f"fill_in with selector: {selector}")
+            if self.browser.is_element_present_by_css(selector, wait_time=5):
+                element = self.browser.find_by_css(selector).first
+                element.is_visible()
+                self.browser.execute_script("arguments[0].scrollIntoView();", element._element)
+                self.browser.execute_script(f"arguments[0].setAttribute('value', '{value}');", element._element)
+                self.browser.execute_script("var event = new Event('input', { bubbles: true }); arguments[0].dispatchEvent(event);", element._element)
+                self.generate_response()
+                return
+
+        raise Exception(
+            f"Element not found with original selector '{css_selector}' "
+            f"or sanitized version '{selectors[1]}'."
+        )
 
 
     """
