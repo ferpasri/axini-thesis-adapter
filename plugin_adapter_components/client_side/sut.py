@@ -2,7 +2,7 @@ from splinter import Browser
 from xmldiff import main
 from lxml import etree
 from io import StringIO 
-
+import re
 
 # This class executes labels on the SUT and generates responses
 class SeleniumSut:
@@ -67,13 +67,33 @@ class SeleniumSut:
         #self.browser.find_by_css(css_selector).is_visible()
         #self.browser.find_by_css(css_selector).click()
 
-        # Interact at JavaScript level
-        element = self.browser.find_by_css(css_selector).first
-        element.is_visible()
-        self.browser.execute_script("arguments[0].scrollIntoView();", element._element)
-        self.browser.execute_script("arguments[0].click();", element._element)
-        self.generate_response()
+        selectors = [css_selector, self.sanitize_selector(css_selector)]
 
+        # Interact at JavaScript level
+        for selector in selectors:
+            print(f"click_link with selector: {selector}")
+            if self.browser.is_element_present_by_css(selector, wait_time=5):
+                element = self.browser.find_by_css(selector).first
+                element.is_visible()
+                self.browser.execute_script("arguments[0].scrollIntoView();", element._element)
+                self.browser.execute_script("arguments[0].click();", element._element)
+                self.generate_response()
+                return
+
+        raise Exception(
+            f"Element not found with original selector '{css_selector}' "
+            f"or sanitized version '{selectors[1]}'."
+        )
+
+    """
+    Loosens strict selectors: converts exact href matches to partial,
+    removes IDs, and normalizes spacing.
+    """
+    def sanitize_selector(self, selector: str) -> str:
+        selector = re.sub(r"\[href=['\"](.*?)['\"]\]", r"[href*='\1']", selector)
+        selector = re.sub(r"#\w+", "", selector)
+        selector = re.sub(r"\s+", " ", selector).strip()
+        return selector
 
     """
     Navigates to the specified URL and generates a response.
