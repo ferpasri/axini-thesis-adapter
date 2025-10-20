@@ -152,8 +152,7 @@ class Handler:
     """
     def supported_labels(self):
         return [
-                self.stimulus('click', {'selector': 'string'}),
-                self.stimulus('click_link', {'selector': 'string'}),
+                self.stimulus('click', {'css': 'string', 'text': 'string'}),
                 self.stimulus('visit', {'_url': 'string'}),
                 self.stimulus('fill_in', {'selector': 'string', 'value': 'string'}),
                 self.stimulus('accept_alert', {}),
@@ -342,13 +341,11 @@ class Handler:
                 self.event_queue.pop(0)
                 match label.label:
                     case 'click':
-                        self.sut.click(label.parameters[0].value.string)
+                        self.sut.click(label.parameters[0].value.string, label.parameters[1].value.string)
                     case 'visit':
                         self.sut.visit(label.parameters[0].value.string)
                     case 'fill_in':
                         self.sut.fill_in(label.parameters[0].value.string, label.parameters[1].value.string)
-                    case 'click_link':
-                        self.sut.click_link(label.parameters[0].value.string)
                     case _:
                         self.logger.warning("Handler", f"Unknown label: {label.label}")
             else:
