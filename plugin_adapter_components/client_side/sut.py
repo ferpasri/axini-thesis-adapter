@@ -124,31 +124,118 @@ class SeleniumSut:
         return xpath
 
     # =============================
-    # Selector Resolution
+    # Selector sanitization (progressive tiers)
     # =============================
+
+    def _sanitize_tier1(self, s: str) -> str:
+        """
+        Tier 1 – harmless formatting fixes.
+        - Normalize spaces around combinators.
+        - Collapse excess whitespace.
+        - Strip any accidental leading combinators.
+        IDs are kept intact.
+        """
+        before = s
+        s = re.sub(r'\\s*(>|\\+|~)\\s*', r' \\1 ', s)
+        s = re.sub(r'\\s+', ' ', s).strip()
+        s = re.sub(r'^(?:[>+~]\\s*)+', '', s)
+        if s != before:
+            self.logger.debug("Sut", f"Sanitize T1: '{before}' -> '{s}'")
+        return s
+
+    def _sanitize_tier2(self, s: str) -> str:
+        """
+        Tier 2 – relax exact URL-like attributes to partial contains.
+        Convert [href="..."] / [src="..."] to [href*="..."] / [src*="..."].
+        """
+        before = s
+        s = re.sub(r'\\[href=(["\\\'])(.*?)\\1\\]', r'[href*=\\1\\2\\1]', s)
+        s = re.sub(r'\\[src=(["\\\'])(.*?)\\1\\]', r'[src*=\\1\\2\\1]', s)
+        if s != before:
+            self.logger.debug("Sut", f"Sanitize T2: '{before}' -> '{s}'")
+        return s
+
+    def _sanitize_tier3(self, s: str) -> str:
+        """
+        Tier 3 (optional) – trim a single trailing :nth-child(...) when it's the last hop
+        and preceded by a stable token (tag/class/id/attr). This reduces brittleness
+        without rewriting the overall structure.
+        """
+        before = s
+        # Only remove a trailing segment like '> something:nth-child(n)' at the very end
+        s2 = re.sub(r'(?<=[:\\]\\w\\*\\)#])\\s*>\\s*[^ >+~]+:nth-child\\(\\d+\\)\\s*$', '', s)
+        # If that didn't match, try removing a bare trailing ':nth-child(n)'
+        if s2 == s:
+            s2 = re.sub(r':nth-child\\(\\d+\\)\\s*$', '', s)
+        if s2 != before:
+            self.logger.debug("Sut", f"Sanitize T3: '{before}' -> '{s2}'")
+        return s2
 
     def sanitize_selector(self, selector: str) -> str:
         """
-        Loosens strict CSS selectors: converts exact href matches to partial,
-        removes IDs, and normalizes spacing. Only applied to CSS attempts.
+        Backwards-compatible single-shot sanitizer kept for callers that expect it.
+        It now:
+          - keeps IDs intact,
+          - normalizes combinators/whitespace (Tier 1),
+          - relaxes href/src exact matches (Tier 2).
         """
         original = selector
-        selector = re.sub(r"\[href=['\"](.*?)['\"]\]", r"[href*='\1']", selector)
-        selector = re.sub(r"#\w+", "", selector)
-        selector = re.sub(r"\s+", " ", selector).strip()
-        if selector != original:
-            self.logger.debug("Sut", "Sanitize selector: '{}' -> '{}'".format(original, selector))
-        return selector
+        s = self._sanitize_tier1(selector)
+        s = self._sanitize_tier2(s)
+        if s != original:
+            self.logger.debug("Sut", "Sanitize selector: '{}' -> '{}'".format(original, s))
+        return s
+
+    def _find_with_progressive_sanitize(self, css: str):
+        """
+        Try original selector, then progressively sanitized variants.
+        Stops at first match.
+        """
+        # Tier 0 – original
+        els = self._find_by_css(css)
+        if els:
+            return els
+
+        # Tier 1
+        s1 = self._sanitize_tier1(css)
+        if s1 != css:
+            els = self._find_by_css(s1)
+            if els:
+                return els
+
+        # Tier 2
+        s2 = self._sanitize_tier2(s1)
+        if s2 != s1:
+            els = self._find_by_css(s2)
+            if els:
+                return els
+
+        # Tier 3 (optional, safe-ish)
+        s3 = self._sanitize_tier3(s2)
+        if s3 != s2:
+            els = self._find_by_css(s3)
+            if els:
+                return els
+
+        return None
+
+    # =============================
+    # Selector Resolution
+    # =============================
 
     def _find_by_css(self, css: str):
         if not css:
             return None
         self.logger.debug("Sut", "_find_by_css: '{}'".format(css))
-        if self.browser.is_element_present_by_css(css, wait_time=self.find_wait_css):
-            els = self.browser.find_by_css(css)
-            self.logger.debug("Sut", "_find_by_css: found {} matches".format(len(els)))
-            return els
-        self.logger.debug("Sut", "_find_by_css: no matches")
+        try:
+            if self.browser.is_element_present_by_css(css, wait_time=self.find_wait_css):
+                els = self.browser.find_by_css(css)
+                self.logger.debug("Sut", "_find_by_css: found {} matches".format(len(els)))
+                return els
+            self.logger.debug("Sut", "_find_by_css: no matches")
+        except Exception as e:
+            # Guard against invalid selectors so we can continue to other tiers
+            self.logger.debug("Sut", f"_find_by_css: Selenium raised {type(e).__name__}: {e}")
         return None
 
     def _find_by_text_deepest(self, text: str):
@@ -170,7 +257,7 @@ class SeleniumSut:
               * pick the one whose own normalized text == text (case-sensitive)
               * if none, search for a deepest descendant inside each CSS match that equals text; click that
           - css only:
-              * first CSS match (sanitized fallback)
+              * original CSS with progressive sanitization fallback
           - text only:
               * deepest text match in the document
         Returns element or None.
@@ -181,11 +268,7 @@ class SeleniumSut:
 
         # Both css and text present
         if css and text:
-            els = self._find_by_css(css)
-            if not els:
-                sane = self.sanitize_selector(css)
-                if sane != css:
-                    els = self._find_by_css(sane)
+            els = self._find_with_progressive_sanitize(css)
             if els:
                 needle = self._normalize_ws_py(text)
                 # 1) try element itself
@@ -210,14 +293,9 @@ class SeleniumSut:
 
         # Only css
         if css:
-            els = self._find_by_css(css)
+            els = self._find_with_progressive_sanitize(css)
             if els:
                 return els.first
-            sane = self.sanitize_selector(css)
-            if sane != css:
-                els = self._find_by_css(sane)
-                if els:
-                    return els.first
             return None
 
         # Only text
