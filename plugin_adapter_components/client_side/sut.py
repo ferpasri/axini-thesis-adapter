@@ -136,9 +136,9 @@ class SeleniumSut:
         IDs are kept intact.
         """
         before = s
-        s = re.sub(r'\\s*(>|\\+|~)\\s*', r' \\1 ', s)
-        s = re.sub(r'\\s+', ' ', s).strip()
-        s = re.sub(r'^(?:[>+~]\\s*)+', '', s)
+        s = re.sub(r"\s*(>|\+|~)\s*", r" \1 ", s)
+        s = re.sub(r"\s+", " ", s).strip()
+        s = re.sub(r"^(?:[>+~]\s*)+", "", s)
         if s != before:
             self.logger.debug("Sut", f"Sanitize T1: '{before}' -> '{s}'")
         return s
@@ -146,27 +146,32 @@ class SeleniumSut:
     def _sanitize_tier2(self, s: str) -> str:
         """
         Tier 2 – relax exact URL-like attributes to partial contains.
-        Convert [href="..."] / [src="..."] to [href*="..."] / [src*="..."].
+        Convert [href="..."] / [src='...'] to [href*="..."] / [src*='...'].
         """
         before = s
-        s = re.sub(r'\\[href=(["\\\'])(.*?)\\1\\]', r'[href*=\\1\\2\\1]', s)
-        s = re.sub(r'\\[src=(["\\\'])(.*?)\\1\\]', r'[src*=\\1\\2\\1]', s)
+        s = re.sub(r"\[href=([\"'])(.*?)\1\]", r"[href*=\1\2\1]", s)
+        s = re.sub(r"\[src=([\"'])(.*?)\1\]",  r"[src*=\1\2\1]", s)
         if s != before:
             self.logger.debug("Sut", f"Sanitize T2: '{before}' -> '{s}'")
         return s
 
     def _sanitize_tier3(self, s: str) -> str:
         """
-        Tier 3 (optional) – trim a single trailing :nth-child(...) when it's the last hop
-        and preceded by a stable token (tag/class/id/attr). This reduces brittleness
-        without rewriting the overall structure.
+        Tier 3 (optional) – trim a single trailing :nth-child(...) when it's the last hop.
+
+        Examples removed:
+          - "... > div:nth-child(3)"   -> "..."
+          - "... li:nth-child(2)"     -> "... li"
         """
         before = s
-        # Only remove a trailing segment like '> something:nth-child(n)' at the very end
-        s2 = re.sub(r'(?<=[:\\]\\w\\*\\)#])\\s*>\\s*[^ >+~]+:nth-child\\(\\d+\\)\\s*$', '', s)
-        # If that didn't match, try removing a bare trailing ':nth-child(n)'
+
+        # Remove a trailing segment like '> something:nth-child(n)' at the very end.
+        s2 = re.sub(r"\s*>\s*[^\s>+~]+:nth-child\(\d+\)\s*$", "", s)
+
+        # If that didn't match, try removing a bare trailing ':nth-child(n)'.
         if s2 == s:
-            s2 = re.sub(r':nth-child\\(\\d+\\)\\s*$', '', s)
+            s2 = re.sub(r":nth-child\(\d+\)\s*$", "", s)
+
         if s2 != before:
             self.logger.debug("Sut", f"Sanitize T3: '{before}' -> '{s2}'")
         return s2
@@ -271,12 +276,20 @@ class SeleniumSut:
             els = self._find_with_progressive_sanitize(css)
             if els:
                 needle = self._normalize_ws_py(text)
-                # 1) try element itself
+
+                # Flexible matching order:
+                #  1) case-sensitive text
+                #  2) case-insensitive text
+                #  3) if CSS matches but text does not, fall back to CSS-only
+                needle_cf = needle.casefold()
+
+                # 1) Case-sensitive: element itself
                 for el in els:
                     if self._element_text_normalized(el) == needle:
                         self.logger.debug("Sut", "Resolved by CSS+TEXT on element itself")
                         return el
-                # 2) try deepest matching descendant under each candidate
+
+                # 1) Case-sensitive: deepest matching descendant
                 lit = self._xpath_literal(needle)
                 rel_xp = ".//*[normalize-space(string(.)) = {L} and not(.//*[normalize-space(string(.)) = {L}])]".format(L=lit)
                 for el in els:
@@ -288,6 +301,34 @@ class SeleniumSut:
                             return desc
                     except Exception:
                         continue
+
+                # 2) Case-insensitive: element itself
+                for el in els:
+                    if self._element_text_normalized(el).casefold() == needle_cf:
+                        self.logger.debug("Sut", "Resolved by CSS+TEXT (case-insensitive) on element itself")
+                        return el
+
+                # 2) Case-insensitive: any descendant (best-effort)
+                for el in els:
+                    try:
+                        for desc in el.find_by_xpath(".//*"):
+                            if self._element_text_normalized(desc).casefold() == needle_cf:
+                                t, r = self._safe_tag_role(desc)
+                                self.logger.debug(
+                                    "Sut",
+                                    "Resolved by CSS+TEXT (case-insensitive) descendant: tag={} role={}".format(t, r),
+                                )
+                                return desc
+                    except Exception:
+                        continue
+
+                # 3) CSS matched but text didn't: fall back to CSS-only
+                self.logger.debug(
+                    "Sut",
+                    "CSS matched ({} candidates) but TEXT did not; falling back to CSS-only".format(len(els)),
+                )
+                return els.first
+
             self.logger.debug("Sut", "No element satisfies CSS+TEXT combined")
             return None
 
